@@ -994,14 +994,15 @@ if(window.rabtaChatCurrentScreenName !== name){
 
 }
   
-// ❤️ Firebase Original Profile
-let cloudProfiles =
+// Firebase Original Profile
+let cloudProfiles = [];
+
 await window.rabtaLoadPublicProfiles();
 
-window.rabtaCloudProfiles = cloudProfiles;
+cloudProfiles = window.rabtaCloudProfiles || [];
 
 let p = cloudProfiles.find(function(x){
-return x.name === name;
+  return x.name === name;
 });
 
 // ❤️ Firebase Activity Status
@@ -28390,24 +28391,19 @@ if(
       );
 
     if(
-      !uploadResult ||
-      !uploadResult.success ||
-      !uploadResult.mediaUrl
-    ){
-      throw new Error("Cloudinary se photo URL nahi mila.");
-    }
+  !uploadResult ||
+  !uploadResult.success ||
+  !uploadResult.mediaUrl
+){
+  throw new Error("Cloudinary se photo URL nahi mila.");
+}
 
-    // ❤️ Base64 nahi, sirf photo URL save karo
-    localStorage.setItem(
-      "profilePhoto",
-      uploadResult.mediaUrl
-    );
+// Photo URL Firebase profile data mein rakho
+profileData.photo = uploadResult.mediaUrl;
+profileData.profilePhoto = uploadResult.mediaUrl;
 
-    // ❤️ Firebase profile mein bhi URL bhejo
-    profileData.photo = uploadResult.mediaUrl;
-    profileData.profilePhoto = uploadResult.mediaUrl;
-
-    await finishProfileSave();
+// Firebase mein profile save karo
+await finishProfileSave();
 
   } catch(error) {
 
