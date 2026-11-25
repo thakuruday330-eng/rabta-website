@@ -29572,24 +29572,95 @@ font-weight:bold;">
 `;
 
   }
-  function toggleProfileVisibility(){
+  // ❤️ Rabta Firebase Profile Visibility Toggle
+async function toggleProfileVisibility(){
 
-let visible =
-localStorage.getItem("profileVisible") !== "off";
+  const user = window.rabtaAuth.currentUser;
 
-if(visible){
+  if(!user){
+    alert("Pehle Rabta mein login karo ❤️");
+    return;
+  }
 
-localStorage.setItem("profileVisible","off");
+  try{
 
-}else{
+    const publicRef = doc(
+      window.rabtaDB,
+      "publicProfiles",
+      user.uid
+    );
 
-localStorage.setItem("profileVisible","on");
+    const privateRef = doc(
+      window.rabtaDB,
+      "users",
+      user.uid
+    );
 
-}
+    const publicDoc = await getDoc(publicRef);
+    const privateDoc = await getDoc(privateRef);
 
-privacySettings();
+    const publicData = publicDoc.exists()
+      ? publicDoc.data()
+      : {};
+
+    const privateData = privateDoc.exists()
+      ? privateDoc.data()
+      : {};
+
+    const currentVisible =
+      publicData.profileVisible !== undefined
+        ? publicData.profileVisible !== false &&
+          publicData.profileVisible !== "off"
+        : privateData.profileVisible !== false &&
+          privateData.profileVisible !== "off";
+
+    const newVisible = !currentVisible;
+
+    await setDoc(
+      publicRef,
+      {
+        uid: user.uid,
+        profileVisible: newVisible,
+        updatedAt: new Date().toISOString()
+      },
+      { merge: true }
+    );
+
+    await setDoc(
+      privateRef,
+      {
+        profileVisible: newVisible,
+        updatedAt: new Date().toISOString()
+      },
+      { merge: true }
+    );
+
+    localStorage.setItem(
+      "profileVisible",
+      newVisible ? "on" : "off"
+    );
+
+    alert(
+      newVisible
+        ? "👁️ Profile ab Discover mein visible hai!"
+        : "🙈 Profile ab Discover mein hidden hai!"
+    );
+
+    privacySettings();
+
+  }catch(error){
+
+    console.error("Rabta Visibility Error:", error);
+
+    alert(
+      "Visibility update nahi hui ❤️\n" +
+      (error.message || error)
+    );
 
   }
+
+}
+  
   function aboutRabta(){
 
 document.getElementById("app").innerHTML = `
@@ -41096,10 +41167,18 @@ window.rabtaLoadPublicProfiles = async function(includeSelf){
 
       const data = profileDoc.data();
 
-      // ❤️ Apni profile ko Discover mein mat dikhana
-      if(profileDoc.id === user.uid && includeSelf !== true){
+// ❤️ Apni profile ko Discover mein mat dikhana
+if(profileDoc.id === user.uid && includeSelf !== true){
   return;
-      }
+}
+
+// ❤️ Hidden profiles ko Discover se hatao
+if(
+  data.profileVisible === false ||
+  data.profileVisible === "off"
+){
+  return;
+}
 
       // ❤️ Naam ke bina profile nahi dikhani
       if(!data.name || !data.name.trim()){
