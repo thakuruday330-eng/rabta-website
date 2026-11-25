@@ -28334,18 +28334,10 @@ let selectedVibes = JSON.parse(
 
 let photoInput = document.getElementById("profilePhoto");
 
-localStorage.setItem("profileName", name);
-localStorage.setItem("profileAge", age);
-localStorage.setItem("profileCity", city);
-localStorage.setItem("profileBio", bio);
-localStorage.setItem("profileInterests", interests);
-localStorage.setItem("profileGender", gender);
-localStorage.setItem("profileLookingFor", lookingFor);
-localStorage.setItem("profileVibes", JSON.stringify(selectedVibes));
-
+  // Temporary vibe selection clear karo
 localStorage.removeItem("tempVibes");
 
-let profileData = {
+  let profileData = {
   name: name,
   age: age,
   city: city,
@@ -28358,17 +28350,60 @@ let profileData = {
 
 async function finishProfileSave(){
 
-  if(typeof window.rabtaSaveCloudProfile === "function"){
-
-    await window.rabtaSaveCloudProfile(profileData);
-
-  }else{
-
-    alert("Bhai, Firebase Cloud Save helper nahi mila ❤️");
-
+  if(typeof window.rabtaSaveCloudProfile !== "function"){
+    alert("Firebase Cloud Save helper nahi mila ❤️");
+    return false;
   }
 
-  profile();
+  try{
+
+    // Purani photo Firebase se preserve karo
+    if(!profileData.photo){
+
+      const user = window.rabtaAuth.currentUser;
+
+      if(user){
+
+        const publicDoc = await getDoc(
+          doc(window.rabtaDB, "publicProfiles", user.uid)
+        );
+
+        if(publicDoc.exists()){
+
+          const oldData = publicDoc.data();
+
+          profileData.photo =
+            oldData.photo ||
+            oldData.profilePhoto ||
+            "";
+
+          profileData.profilePhoto = profileData.photo;
+
+        }
+
+      }
+
+    }
+
+    const saved = await window.rabtaSaveCloudProfile(profileData);
+
+    if(!saved){
+      return false;
+    }
+
+    await profile();
+
+    return true;
+
+  }catch(error){
+
+    console.error("Rabta Profile Save Error:", error);
+
+    alert("Profile save nahi hui ❤️\n" + error.message);
+
+    return false;
+
+  }
 
 }
 
@@ -28427,28 +28462,81 @@ await finishProfileSave();
 
 }
 
-  function profile(){
+// ❤️ Rabta Firebase Profile Screen
+async function profile(){
 
-let name = localStorage.getItem("profileName") || "Uday Singh";
-let age = localStorage.getItem("profileAge") || "22";
-let city = localStorage.getItem("profileCity") || "FATEHPUR";
-let bio = localStorage.getItem("profileBio") || "I am student";
-let interests = localStorage.getItem("profileInterests") || "";
-    let gender = localStorage.getItem("profileGender") || "";
-    let lookingFor = localStorage.getItem("profileLookingFor") || "";
-    let vibes = JSON.parse(localStorage.getItem("profileVibes") || "[]");
-    let complete = 0;
+  const user = window.rabtaAuth.currentUser;
 
-if(name) complete++;
-if(age) complete++;
-if(city) complete++;
-if(bio) complete++;
-if(interests) complete++;
-if(gender) complete++;
-if(lookingFor) complete++;
-if(localStorage.getItem("profilePhoto")) complete++;
-if(vibes.length > 0) complete++;
-let profilePercent = Math.round((complete / 9) * 100);
+  if(!user){
+    alert("Pehle Rabta mein login karo ❤️");
+    return;
+  }
+
+  let p = {};
+  let publicData = {};
+
+  try{
+
+    // Private profile Firebase se load
+    const userDoc = await getDoc(
+      doc(window.rabtaDB, "users", user.uid)
+    );
+
+    if(userDoc.exists()){
+      p = userDoc.data().profile || {};
+    }
+
+    // Public profile Firebase se load
+    const publicDoc = await getDoc(
+      doc(window.rabtaDB, "publicProfiles", user.uid)
+    );
+
+    if(publicDoc.exists()){
+      publicData = publicDoc.data();
+    }
+
+  }catch(error){
+
+    console.error("Rabta Profile Load Error:", error);
+
+    alert("Firebase se profile load nahi hui. Internet check karo.");
+    return;
+
+  }
+
+  let name = p.name || publicData.name || "";
+  let age = p.age || publicData.age || "";
+  let city = p.city || publicData.city || "";
+  let bio = p.bio || publicData.bio || "";
+  let interests = p.interests || publicData.interests || "";
+  let gender = p.gender || publicData.gender || "";
+  let lookingFor = p.lookingFor || publicData.lookingFor || "";
+
+  let vibes = Array.isArray(p.vibes)
+    ? p.vibes
+    : (Array.isArray(publicData.vibes) ? publicData.vibes : []);
+
+  let photo =
+    publicData.photo ||
+    publicData.profilePhoto ||
+    p.photo ||
+    p.profilePhoto ||
+    "";
+
+  let complete = 0;
+
+  if(name) complete++;
+  if(age) complete++;
+  if(city) complete++;
+  if(bio) complete++;
+  if(interests) complete++;
+  if(gender) complete++;
+  if(lookingFor) complete++;
+  if(photo) complete++;
+  if(vibes.length > 0) complete++;
+
+  let profilePercent = Math.round((complete / 9) * 100);
+  
 document.getElementById("app").innerHTML=`
 <div class="page">
 <div style="
@@ -28536,7 +28624,7 @@ background:linear-gradient(180deg,#ffffff,#fff8fa);">
 
 <img id="profileImage"
 onclick="viewProfilePhoto(this.src)"
-src="${localStorage.getItem("profilePhoto") || ""}"
+src="${photo}"
 style="
 width:120px;
 height:120px;
@@ -28767,150 +28855,205 @@ box-shadow:0 5px 14px rgba(255,23,68,0.10);">
 </div>
 </div>`;
   }
-  async function shareMyProfile(){
 
-let name =
-localStorage.getItem("profileName") || "Uday Singh";
+  // ❤️ Rabta Firebase Profile Share
+async function shareMyProfile(){
 
-let age =
-localStorage.getItem("profileAge") || "22";
+  const user = window.rabtaAuth.currentUser;
 
-let city =
-localStorage.getItem("profileCity") || "FATEHPUR";
+  if(!user){
+    alert("Pehle Rabta mein login karo ❤️");
+    return;
+  }
 
-let bio =
-localStorage.getItem("profileBio") || "I am student";
+  try{
 
-    let interests =
-localStorage.getItem("profileInterests") || "";
+    // Private profile Firebase se
+    const userDoc = await getDoc(
+      doc(window.rabtaDB, "users", user.uid)
+    );
 
-let gender =
-localStorage.getItem("profileGender") || "";
+    // Public profile Firebase se
+    const publicDoc = await getDoc(
+      doc(window.rabtaDB, "publicProfiles", user.uid)
+    );
 
-let lookingFor =
-localStorage.getItem("profileLookingFor") || "";
+    const p = userDoc.exists()
+      ? (userDoc.data().profile || {})
+      : {};
 
-let vibes =
-JSON.parse(localStorage.getItem("profileVibes") || "[]");
-    
-let photo =
-localStorage.getItem("profilePhoto") || "";
+    const publicData = publicDoc.exists()
+      ? publicDoc.data()
+      : {};
 
-let shareText =
-"❤️ Rabta Profile\n\n" +
-"👤 " + name + ", " + age + "\n" +
-"📍 " + city + "\n" +
-"📝 " + bio + "\n" +
-"❤️ Interests: " + (interests || "Not added") + "\n" +
-"👤 Gender: " + (gender || "Not added") + "\n" +
-"💕 Looking For: " + (lookingFor || "Not added") + "\n" +
-"✨ Vibes: " +
-(vibes.length ? vibes.join(", ") : "Not added") +
-"\n\n" +
-"📱 Shared from Rabta ❤️";
+    const name = p.name || publicData.name || "";
+    const age = p.age || publicData.age || "";
+    const city = p.city || publicData.city || "";
+    const bio = p.bio || publicData.bio || "";
 
-if(!navigator.share){
+    const interests =
+      p.interests || publicData.interests || "";
 
-navigator.clipboard.writeText(shareText);
+    const gender =
+      p.gender || publicData.gender || "";
 
-alert(
-"Profile details copy ho gaye ❤️\n\n" +
-"Photo ke saath share karne ke liye phone ka Share option available nahi hai."
-);
+    const lookingFor =
+      p.lookingFor || publicData.lookingFor || "";
 
-return;
+    const vibes = Array.isArray(p.vibes)
+      ? p.vibes
+      : (Array.isArray(publicData.vibes)
+          ? publicData.vibes
+          : []);
 
-}
+    const photo =
+      publicData.photo ||
+      publicData.profilePhoto ||
+      p.photo ||
+      p.profilePhoto ||
+      "";
 
-if(!photo){
+    if(!name){
+      alert("Pehle apna profile name add karo ❤️");
+      return;
+    }
 
-navigator.share({
-title:"❤️ " + name + " - Rabta Profile",
-text:shareText
-});
+    const shareText =
+      "❤️ Rabta Profile\n\n" +
+      "👤 " + name + (age ? ", " + age : "") + "\n" +
+      "📍 " + (city || "Not added") + "\n" +
+      "📝 " + (bio || "Not added") + "\n" +
+      "❤️ Interests: " + (interests || "Not added") + "\n" +
+      "👤 Gender: " + (gender || "Not added") + "\n" +
+      "💕 Looking For: " + (lookingFor || "Not added") + "\n" +
+      "✨ Vibes: " +
+      (vibes.length ? vibes.join(", ") : "Not added") +
+      "\n\n📱 Shared from Rabta ❤️";
 
-return;
+    if(!navigator.share){
 
-}
+      if(navigator.clipboard){
+        await navigator.clipboard.writeText(shareText);
+        alert("Profile details copy ho gaye ❤️");
+      }else{
+        alert(shareText);
+      }
 
-try{
+      return;
+    }
 
-let fileName =
-name.replace(/[^a-zA-Z0-9]/g,"_") +
-"_Rabta_Profile.jpg";
+    if(!photo){
 
-let response = await fetch(photo);
+      await navigator.share({
+        title: "❤️ " + name + " - Rabta Profile",
+        text: shareText
+      });
 
-let blob = await response.blob();
+      return;
+    }
 
-let file = new File(
-[blob],
-fileName,
-{
-type:blob.type || "image/jpeg"
-}
-);
+    const response = await fetch(photo);
 
-if(
-navigator.canShare &&
-navigator.canShare({files:[file]})
-){
+    if(!response.ok){
+      throw new Error("Profile photo download nahi hui.");
+    }
 
-navigator.share({
-title:"❤️ " + name + " - Rabta Profile",
-text:shareText,
-files:[file]
-});
+    const blob = await response.blob();
 
-}else{
+    const file = new File(
+      [blob],
+      name.replace(/[^a-zA-Z0-9]/g, "_") +
+      "_Rabta_Profile.jpg",
+      {
+        type: blob.type || "image/jpeg"
+      }
+    );
 
-navigator.share({
-title:"❤️ " + name + " - Rabta Profile",
-text:shareText
-});
+    if(
+      navigator.canShare &&
+      navigator.canShare({files:[file]})
+    ){
 
-}
+      await navigator.share({
+        title: "❤️ " + name + " - Rabta Profile",
+        text: shareText,
+        files: [file]
+      });
 
-}catch(error){
+    }else{
 
-console.log(error);
+      await navigator.share({
+        title: "❤️ " + name + " - Rabta Profile",
+        text: shareText
+      });
 
-navigator.share({
-title:"❤️ " + name + " - Rabta Profile",
-text:shareText
-});
+    }
 
-}
+  }catch(error){
+
+    console.error("Rabta Profile Share Error:", error);
+
+    if(error.name !== "AbortError"){
+      alert(
+        "Profile share nahi ho payi ❤️\n" +
+        (error.message || String(error))
+      );
+    }
 
   }
-  function shareProfilePreview(){
 
-let name =
-localStorage.getItem("profileName") || "Uday Singh";
+}
 
-let age =
-localStorage.getItem("profileAge") || "22";
+  async function shareProfilePreview(){
 
-let city =
-localStorage.getItem("profileCity") || "FATEHPUR";
+  const user = window.rabtaAuth.currentUser;
 
-let bio =
-localStorage.getItem("profileBio") || "I am student";
+  if(!user){
+    alert("Pehle login karo ❤️");
+    return;
+  }
 
-let interests =
-localStorage.getItem("profileInterests") || "";
+  try{
 
-let gender =
-localStorage.getItem("profileGender") || "";
+    const userDoc = await getDoc(
+      doc(window.rabtaDB, "users", user.uid)
+    );
 
-let lookingFor =
-localStorage.getItem("profileLookingFor") || "";
+    const publicDoc = await getDoc(
+      doc(window.rabtaDB, "publicProfiles", user.uid)
+    );
 
-let vibes =
-JSON.parse(localStorage.getItem("profileVibes") || "[]");
+    const p = userDoc.exists()
+      ? (userDoc.data().profile || {})
+      : {};
 
-let photo =
-localStorage.getItem("profilePhoto") || "";
+    const publicData = publicDoc.exists()
+      ? publicDoc.data()
+      : {};
+
+    let name = p.name || publicData.name || "";
+    let age = p.age || publicData.age || "";
+    let city = p.city || publicData.city || "";
+    let bio = p.bio || publicData.bio || "";
+    let interests = p.interests || publicData.interests || "";
+    let gender = p.gender || publicData.gender || "";
+    let lookingFor = p.lookingFor || publicData.lookingFor || "";
+
+    let vibes = Array.isArray(p.vibes)
+      ? p.vibes
+      : (Array.isArray(publicData.vibes) ? publicData.vibes : []);
+
+    let photo =
+      publicData.photo ||
+      publicData.profilePhoto ||
+      p.photo ||
+      p.profilePhoto ||
+      "";
+
+    if(!name){
+      alert("Pehle apna profile complete karo ❤️");
+      return;
+    }
 
 document.getElementById("app").innerHTML = `
 
