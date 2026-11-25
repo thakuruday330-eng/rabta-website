@@ -29245,38 +29245,8 @@ font-weight:bold;
 ">
 📤 Share Now
 </button>
-<button
-type="button"
-onclick="copyProfileDetails()"
-style="
-width:100%;
-padding:12px;
-margin-top:9px;
-border:1px solid #ffd1dc;
-border-radius:24px;
-background:#fff5f8;
-color:#ff1744;
-font-size:14px;
-font-weight:bold;
-">
-📋 Copy Profile Details
-</button>
-<button
-type="button"
-onclick="shareProfileWhatsApp()"
-style="
-width:100%;
-padding:12px;
-margin-top:9px;
-border:0;
-border-radius:24px;
-background:#25D366;
-color:white;
-font-size:14px;
-font-weight:bold;
-">
-💬 Share on WhatsApp
-</button>
+
+
 <div style="
 margin-top:12px;
 padding:10px 14px;
@@ -29332,7 +29302,19 @@ font-weight:bold;
 
 `;
 
+  }catch(error){
+
+    console.error("Rabta Share Preview Load Error:", error);
+
+    alert(
+      "Share Profile preview load nahi hua ❤️\n" +
+      (error.message || error)
+    );
+
   }
+
+}
+  
   function copyProfileDetails(){
 
 let name =
