@@ -42844,6 +42844,11 @@ alert("CHECK 3 ❤️: Firebase user mil gaya!");
 
       await window.rabtaLoadCloudProfile();
 
+      // ❤️ Discover ke public profiles Firebase se load karo
+if(typeof window.rabtaRefreshDiscoverProfiles === "function"){
+  await window.rabtaRefreshDiscoverProfiles();
+}
+  
       alert("CHECK A: Cloud Profile Load complete ❤️");
 
 console.log("Rabta: Cloud Profile Load complete");
