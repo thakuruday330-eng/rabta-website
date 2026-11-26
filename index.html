@@ -41303,12 +41303,10 @@ window.rabtaRefreshDiscoverProfiles = async function(){
 
 };
 
-  // ❤️ Rabta Firebase Connection Request
+  // ❤️ Rabta Firebase Connection Request — Firebase Only
 window.rabtaSendFirebaseConnectionRequest = async function(receiverUid){
 
-  alert("✅ Rabta Firebase Connection Request function chala!");
-  
-  const user = window.rabtaAuth.currentUser;
+  const user = window.rabtaAuth?.currentUser;
 
   if(!user){
     alert("Bhai, pehle Rabta mein login karo ❤️");
@@ -41324,28 +41322,30 @@ window.rabtaSendFirebaseConnectionRequest = async function(receiverUid){
 
     const requestId = user.uid + "_" + receiverUid;
 
-    const requestRef = doc(
+    // ❤️ Firebase request document
+    const requestRef = window.rabtaFirebaseDoc(
       window.rabtaDB,
       "connectionRequests",
       requestId
     );
 
-    alert("CHECK 1: Firebase request check kar raha hai");
-    
-    const existingRequest = await getDoc(requestRef);
+    // ❤️ Pehle check karo request pehle se hai ya nahi
+    const existingRequest =
+      await window.rabtaFirebaseGetDoc(requestRef);
 
     if(existingRequest.exists()){
       alert("❤️ Is user ko request pehle hi bheji ja chuki hai.");
       return false;
     }
 
-    alert("CHECK 2: Firebase request save kar raha hai");
-    
-    await setDoc(requestRef, {
+    // ❤️ Firebase mein request save karo
+    await window.rabtaFirebaseSetDoc(requestRef, {
+
       senderUid: user.uid,
       receiverUid: receiverUid,
       status: "pending",
       createdAt: new Date().toISOString()
+
     });
 
     alert("❤️ Firebase connection request bhej di gayi!");
@@ -41356,7 +41356,12 @@ window.rabtaSendFirebaseConnectionRequest = async function(receiverUid){
 
     console.error("Rabta Connection Request Error:", error);
 
-    alert("Firebase Error: " + error.code + "\n" + error.message);
+    alert(
+      "Firebase Error: " +
+      error.code +
+      "\n" +
+      error.message
+    );
 
     return false;
 
@@ -41364,10 +41369,10 @@ window.rabtaSendFirebaseConnectionRequest = async function(receiverUid){
 
 };
 
-  // ❤️ Rabta: doosri ID ki incoming requests load karo
+  // ❤️ Rabta: Incoming Connection Requests — Firebase Only
 window.rabtaLoadIncomingConnectionRequests = async function(){
 
-  const user = window.rabtaAuth.currentUser;
+  const user = window.rabtaAuth?.currentUser;
 
   if(!user){
     alert("Bhai, pehle Rabta mein login karo ❤️");
@@ -41376,14 +41381,26 @@ window.rabtaLoadIncomingConnectionRequests = async function(){
 
   try{
 
-    const requestsQuery = query(
-      collection(window.rabtaDB, "connectionRequests"),
-      where("receiverUid", "==", user.uid)
+    // ❤️ Firebase query
+    const requestsQuery = window.rabtaFirebaseQuery(
+      window.rabtaFirebaseCollection(
+        window.rabtaDB,
+        "connectionRequests"
+      ),
+      window.rabtaFirebaseWhere(
+        "receiverUid",
+        "==",
+        user.uid
+      )
     );
 
-    const snapshot = await getDocs(requestsQuery);
+    // ❤️ Firebase se received requests load
+    const snapshot =
+      await window.rabtaFirebaseGetDocs(requestsQuery);
 
-    const profiles = await window.rabtaLoadPublicProfiles();
+    // ❤️ Firebase public profiles
+    const profiles =
+      await window.rabtaLoadPublicProfiles();
 
     return snapshot.docs
       .map(function(requestDoc){
@@ -41418,13 +41435,16 @@ window.rabtaLoadIncomingConnectionRequests = async function(){
     );
 
     return [];
+
   }
+
 };
 
-  // ❤️ Rabta: Add, Confirm aur Add Back status
+
+  // ❤️ Rabta: Connection Statuses — Firebase Only
 window.rabtaLoadMyConnectionStatuses = async function(){
 
-  const user = window.rabtaAuth.currentUser;
+  const user = window.rabtaAuth?.currentUser;
 
   if(!user){
     return {};
@@ -41432,22 +41452,42 @@ window.rabtaLoadMyConnectionStatuses = async function(){
 
   try{
 
-    const sentQuery = query(
-      collection(window.rabtaDB, "connectionRequests"),
-      where("senderUid", "==", user.uid)
+    // ❤️ Sent requests query
+    const sentQuery = window.rabtaFirebaseQuery(
+      window.rabtaFirebaseCollection(
+        window.rabtaDB,
+        "connectionRequests"
+      ),
+      window.rabtaFirebaseWhere(
+        "senderUid",
+        "==",
+        user.uid
+      )
     );
 
-    const receivedQuery = query(
-      collection(window.rabtaDB, "connectionRequests"),
-      where("receiverUid", "==", user.uid)
+    // ❤️ Received requests query
+    const receivedQuery = window.rabtaFirebaseQuery(
+      window.rabtaFirebaseCollection(
+        window.rabtaDB,
+        "connectionRequests"
+      ),
+      window.rabtaFirebaseWhere(
+        "receiverUid",
+        "==",
+        user.uid
+      )
     );
 
-    const sentSnapshot = await getDocs(sentQuery);
-    const receivedSnapshot = await getDocs(receivedQuery);
+    // ❤️ Firebase se requests load
+    const sentSnapshot =
+      await window.rabtaFirebaseGetDocs(sentQuery);
+
+    const receivedSnapshot =
+      await window.rabtaFirebaseGetDocs(receivedQuery);
 
     const statuses = {};
 
-    // Current user ne jo requests bheji hain
+    // ❤️ Current user ne jo requests bheji hain
     sentSnapshot.docs.forEach(function(requestDoc){
 
       const data = requestDoc.data();
@@ -41458,7 +41498,7 @@ window.rabtaLoadMyConnectionStatuses = async function(){
 
     });
 
-    // Current user ko jo requests mili hain
+    // ❤️ Current user ko jo requests mili hain
     receivedSnapshot.docs.forEach(function(requestDoc){
 
       const data = requestDoc.data();
@@ -41468,20 +41508,14 @@ window.rabtaLoadMyConnectionStatuses = async function(){
 
       if(data.status === "confirmed"){
 
-        // Agar reverse request confirmed hai,
-        // to connection dono taraf complete hai
         if(statuses[senderUid] === "confirmed"){
           statuses[senderUid] = "confirmed";
         }
 
-        // Agar reverse request pending hai,
-        // to current user ko use confirm karna hai
         else if(statuses[senderUid] === "pending"){
           statuses[senderUid] = "pending";
         }
 
-        // Pehli request confirm hui:
-        // receiver ko Add Back karna hai
         else{
           statuses[senderUid] = "addBack";
         }
@@ -41511,7 +41545,7 @@ window.rabtaLoadMyConnectionStatuses = async function(){
 
 };
 
-  // ❤️ Rabta: Profile Added You aur Added Lists
+ // ❤️ Rabta: Profile Connections — Firebase Only
 window.rabtaLoadProfileConnections = async function(targetUid){
 
   if(!targetUid){
@@ -41525,34 +41559,41 @@ window.rabtaLoadProfileConnections = async function(targetUid){
 
     const db = window.rabtaDB;
 
-    const addedYouQuery = query(
-      collection(db, "connectionRequests"),
-      where("receiverUid", "==", targetUid),
-      where("status", "==", "confirmed")
+    // ❤️ Jinhone target user ko add kiya
+    const addedYouQuery = window.rabtaFirebaseQuery(
+      window.rabtaFirebaseCollection(db, "connectionRequests"),
+      window.rabtaFirebaseWhere("receiverUid", "==", targetUid),
+      window.rabtaFirebaseWhere("status", "==", "confirmed")
     );
 
-    const addedQuery = query(
-      collection(db, "connectionRequests"),
-      where("senderUid", "==", targetUid),
-      where("status", "==", "confirmed")
+    // ❤️ Jinko target user ne add kiya
+    const addedQuery = window.rabtaFirebaseQuery(
+      window.rabtaFirebaseCollection(db, "connectionRequests"),
+      window.rabtaFirebaseWhere("senderUid", "==", targetUid),
+      window.rabtaFirebaseWhere("status", "==", "confirmed")
     );
 
     const [addedYouSnapshot, addedSnapshot] =
       await Promise.all([
-        getDocs(addedYouQuery),
-        getDocs(addedQuery)
+        window.rabtaFirebaseGetDocs(addedYouQuery),
+        window.rabtaFirebaseGetDocs(addedQuery)
       ]);
 
-    // ❤️ UID se seedha public profile load karo
+    // ❤️ Firebase se public profile load
     async function loadPerson(uid){
 
       if(!uid){
         return null;
       }
 
-      const profileSnapshot = await getDoc(
-  doc(db, "publicProfiles", uid)
-);
+      const profileSnapshot =
+        await window.rabtaFirebaseGetDoc(
+          window.rabtaFirebaseDoc(
+            db,
+            "publicProfiles",
+            uid
+          )
+        );
 
       if(!profileSnapshot.exists()){
         return {
@@ -41580,6 +41621,7 @@ window.rabtaLoadProfileConnections = async function(targetUid){
           data.photoURL ||
           ""
       };
+
     }
 
     const addedYou = await Promise.all(
@@ -41628,6 +41670,7 @@ window.rabtaLoadProfileConnections = async function(targetUid){
 
 };
   
+
   // ❤️ Rabta: Firebase incoming request Confirm / Reject
 window.rabtaHandleFirebaseIncoming = async function(
   requestId,
@@ -41635,7 +41678,7 @@ window.rabtaHandleFirebaseIncoming = async function(
   name
 ){
 
-  const user = window.rabtaAuth.currentUser;
+  const user = window.rabtaAuth?.currentUser;
 
   if(!user){
     alert("Bhai, pehle Rabta mein login karo ❤️");
@@ -41654,17 +41697,15 @@ window.rabtaHandleFirebaseIncoming = async function(
 
   try{
 
-    const requestRef = doc(
+    const requestRef = window.rabtaFirebaseDoc(
       window.rabtaDB,
       "connectionRequests",
       requestId
     );
 
-    alert("CHECK A: Request read kar raha hoon");
-
-const requestSnapshot = await getDoc(requestRef);
-
-alert("CHECK B: Request read ho gayi");
+    // ❤️ Firebase request read
+    const requestSnapshot =
+      await window.rabtaFirebaseGetDoc(requestRef);
 
     if(!requestSnapshot.exists()){
       alert("Bhai, Firebase mein request nahi mili ❤️");
@@ -41684,15 +41725,12 @@ alert("CHECK B: Request read ho gayi");
       return;
     }
 
-    alert("CHECK C: Status update kar raha hoon");
-
-await setDoc(
-  requestRef,
-  { status: status },
-  { merge: true }
-);
-
-alert("CHECK D: Status update ho gaya");
+    // ❤️ Firebase status update
+    await window.rabtaFirebaseSetDoc(
+      requestRef,
+      { status: status },
+      { merge: true }
+    );
 
     if(status === "confirmed"){
 
@@ -41744,10 +41782,11 @@ alert("CHECK D: Status update ho gaya");
 
 };
 
-  // ❤️ Rabta Firebase Add Back
+
+ // ❤️ Rabta Firebase Add Back — Firebase Only
 window.rabtaAddBackFirebaseConnection = async function(otherUid){
 
-  const user = window.rabtaAuth.currentUser;
+  const user = window.rabtaAuth?.currentUser;
 
   if(!user){
     alert("Pehle Rabta mein login karo ❤️");
@@ -41762,13 +41801,15 @@ window.rabtaAddBackFirebaseConnection = async function(otherUid){
 
     const requestId = user.uid + "_" + otherUid;
 
-    const requestRef = doc(
+    // ❤️ Firebase request document
+    const requestRef = window.rabtaFirebaseDoc(
       window.rabtaDB,
       "connectionRequests",
       requestId
     );
 
-    const existing = await getDoc(requestRef);
+    const existing =
+      await window.rabtaFirebaseGetDoc(requestRef);
 
     if(existing.exists()){
 
@@ -41782,11 +41823,14 @@ window.rabtaAddBackFirebaseConnection = async function(otherUid){
       return false;
     }
 
-    await setDoc(requestRef, {
+    // ❤️ Firebase mein confirmed connection save
+    await window.rabtaFirebaseSetDoc(requestRef, {
+
       senderUid: user.uid,
       receiverUid: otherUid,
       status: "confirmed",
       createdAt: new Date().toISOString()
+
     });
 
     return true;
@@ -41798,9 +41842,11 @@ window.rabtaAddBackFirebaseConnection = async function(otherUid){
     alert("Add Back nahi hua: " + error.message);
 
     return false;
+
   }
 
-};
+}; 
+  
 
   // ❤️ Rabta Profile Add / Add Back Action
 window.rabtaProfileConnectionAction = async function(otherUid, button){
