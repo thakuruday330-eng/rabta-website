@@ -29433,7 +29433,45 @@ localStorage.setItem("notifications","on");
 settings();
 
   }
-  function privacySettings(){
+
+  async function privacySettings(){
+
+  const user = window.rabtaAuth.currentUser;
+
+  if(user){
+
+    try{
+
+      const publicDoc = await window.rabtaFirebaseGetDoc(
+  window.rabtaFirebaseDoc(
+    window.rabtaDB,
+    "publicProfiles",
+    user.uid
+  )
+);
+
+      if(publicDoc.exists()){
+
+        const data = publicDoc.data();
+
+        const visible =
+          data.profileVisible !== false &&
+          data.profileVisible !== "off";
+
+        localStorage.setItem(
+          "profileVisible",
+          visible ? "on" : "off"
+        );
+
+      }
+
+    }catch(error){
+
+      console.error("Privacy Settings Load Error:", error);
+
+    }
+
+  }
 
 document.getElementById("app").innerHTML = `
 
@@ -29467,8 +29505,9 @@ color:#777;
 font-size:14px;
 line-height:1.6;
 margin:15px 0;">
-Aapki profile information aur preferences
-aapke device par local storage mein save hoti hain.
+Aapki profile information Firebase Cloud par
+aapke account ke saath securely save hoti hai.
+Aap apni profile visibility kabhi bhi change kar sakte ho.
 </p>
 
 <div style="
@@ -29584,20 +29623,20 @@ async function toggleProfileVisibility(){
 
   try{
 
-    const publicRef = doc(
+    const publicRef = window.rabtaFirebaseDoc(
       window.rabtaDB,
       "publicProfiles",
       user.uid
     );
 
-    const privateRef = doc(
+    const privateRef = window.rabtaFirebaseDoc(
       window.rabtaDB,
       "users",
       user.uid
     );
 
-    const publicDoc = await getDoc(publicRef);
-    const privateDoc = await getDoc(privateRef);
+    const publicDoc = await await window.rabtaFirebaseGetDoc(publicRef);
+    const privateDoc = await window.rabtaFirebaseGetDoc(privateRef);
 
     const publicData = publicDoc.exists()
       ? publicDoc.data()
@@ -29616,7 +29655,7 @@ async function toggleProfileVisibility(){
 
     const newVisible = !currentVisible;
 
-    await setDoc(
+    await window.rabtaFirebaseSetDoc(
       publicRef,
       {
         uid: user.uid,
@@ -29626,7 +29665,7 @@ async function toggleProfileVisibility(){
       { merge: true }
     );
 
-    await setDoc(
+    await window.rabtaFirebaseSetDoc(
       privateRef,
       {
         profileVisible: newVisible,
