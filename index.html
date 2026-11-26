@@ -24047,10 +24047,10 @@ async function filterDiscoverProfiles(value){
 
 }
 
-// ❤️ Rabta Add Connection — Firebase Connected
+
+  // ❤️ Rabta Add Connection — Firebase Only
 async function rabtaAddConnection(name){
 
-  // ☁️ Firebase par profile ki UID dhoondo
   const cloudProfiles = Array.isArray(window.rabtaCloudProfiles)
     ? window.rabtaCloudProfiles
     : [];
@@ -24059,47 +24059,36 @@ async function rabtaAddConnection(name){
     return p.name === name;
   });
 
-  // ❤️ Agar registered cloud profile hai, Firebase request bhejo
-  if(cloudProfile && cloudProfile.uid){
+  if(!cloudProfile || !cloudProfile.uid){
+    alert("Firebase profile nahi mili. Dobara Discover refresh karo.");
+    return;
+  }
 
-    if(typeof window.rabtaSendFirebaseConnectionRequest !== "function"){
-      alert("Bhai, Firebase helper nahi mila ❤️");
-      return;
-    }
+  if(typeof window.rabtaSendFirebaseConnectionRequest !== "function"){
+    alert("Firebase connection helper nahi mila.");
+    return;
+  }
+
+  try{
 
     await window.rabtaSendFirebaseConnectionRequest(
       cloudProfile.uid
     );
 
-    return;
+    // ❤️ Discover profiles refresh
+    const searchBox = document.getElementById("rabtaProfileSearch");
+
+    if(searchBox){
+      await filterDiscoverProfiles(searchBox.value);
+    }
+
+  }catch(error){
+
+    console.error("Rabta Add Connection Error:", error);
+
+    alert("Connection request nahi bheji ja saki:\n" + error.message);
+
   }
-
-  // ❤️ Cloud profile nahi mili to purana local feature chalao
-  let requests = JSON.parse(
-    localStorage.getItem("rabtaConnectionRequests") || "[]"
-  );
-
-  let alreadyAdded = requests.some(function(r){
-    return r.name === name && r.status === "pending";
-  });
-
-  if(alreadyAdded){
-    alert("⏳ Request pehle se bheji hui hai!");
-    return;
-  }
-
-  requests.push({
-    name: name,
-    status: "pending",
-    createdAt: Date.now()
-  });
-
-  localStorage.setItem(
-    "rabtaConnectionRequests",
-    JSON.stringify(requests)
-  );
-
-  alert("❤️ " + name + " ko local connection request bhej di!");
 
 }
 
@@ -41229,9 +41218,12 @@ window.rabtaLoadPublicProfiles = async function(includeSelf){
 
   try{
 
-    const snapshot = await getDocs(
-      collection(window.rabtaDB, "publicProfiles")
-    );
+    const snapshot = await window.rabtaFirebaseGetDocs(
+  window.rabtaFirebaseCollection(
+    window.rabtaDB,
+    "publicProfiles"
+  )
+);
 
     const cloudProfiles = [];
 
