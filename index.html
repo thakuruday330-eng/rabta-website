@@ -240,45 +240,14 @@ box-sizing:border-box;
 </div>
 
 <script>
-  let profiles = [
-{
-name:"Priya",
-age:21,
-city:"Lucknow",
-job:"Student",
-interests:"Music, Travel, Movies",
-gender:"Female",
-lookingFor:"Dating",
-vibes:["🎵 Music","✈️ Travel","😂 Fun & Comedy"],
-photo:"https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=500"
-},
 
-{
-name:"Anjali",
-age:23,
-city:"Delhi",
-job:"Designer",
-interests:"Fashion, Travel, Music",
-gender:"Female",
-lookingFor:"Relationship",
-vibes:["🎮 Gaming","🌙 Late Night Talks","✈️ Travel"],
-photo:"https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=500"
-},
+  // ❤️ Demo Profiles Removed
+// Rabta profiles Firebase se load hongi
 
-{
-name:"Neha",
-age:24,
-city:"Lucknow",
-job:"Photographer",
-interests:"Photography, Travel, Music",
-gender:"Female",
-lookingFor:"Dating",
-vibes:["🎵 Music","🎮 Gaming","🌙 Late Night Talks"],
-photo:"https://images.unsplash.com/photo-1488426862026-3ee34a7d66df?w=500"
-}
-];
+let profiles = [];
 
 let currentProfile = 0;
+  
   function isMyProfileVisible(){
 
 return localStorage.getItem("profileVisible") !== "off";
@@ -336,263 +305,8 @@ You and ${p.name} matched ❤️
 
   }
   
-function rabtaMatches(){
 
-let matchesList =
-JSON.parse(localStorage.getItem("matches") || "[]");
 
-let blockedProfiles =
-JSON.parse(localStorage.getItem("blockedProfiles") || "[]");
-
-matchesList =
-matchesList.filter(function(p){
-return !blockedProfiles.includes(p.name);
-});
-
-document.getElementById("app").innerHTML = `
-
-<div
-class="card"
-style="
-position:relative;
-z-index:1;
-width:100%;
-box-sizing:border-box;
-">
-
-<h1>❤️ My Matches</h1>
-
-<p style="color:#888;">
-${matchesList.length} matches found
-</p>
-
-${
-matchesList.length === 0
-?
-`
-<p style="color:#888;">
-Abhi koi match nahi hai ❤️
-</p>
-`
-:
-matchesList.map(function(p){
-
-return `
-
-<div
-style="
-position:relative;
-z-index:2;
-width:100%;
-box-sizing:border-box;
-padding:12px;
-margin-bottom:12px;
-border:1px solid #ffe1e8;
-border-radius:18px;
-background:#fff5f8;
-">
-
-<div
-style="
-display:flex;
-align-items:center;
-gap:12px;
-width:100%;
-">
-
-<img
-src="${p.photo || ""}"
-onclick="viewMatchProfile('${p.name}','matches')"
-style="
-display:block;
-position:relative;
-z-index:3;
-width:60px;
-height:60px;
-flex:0 0 60px;
-border-radius:50%;
-object-fit:cover;
-border:3px solid ${p.name === "Priya" ? "#ffd700" : "#ff1744"};
-cursor:pointer;
-">
-
-<div
-style="
-flex:1;
-min-width:0;
-text-align:left;
-">
-
-<div style="
-font-size:16px;
-font-weight:bold;
-">
-
-${p.name}, ${p.age} ❤️
-
-${
-p.name === "Priya"
-?
-`
-<span style="
-display:inline-block;
-background:linear-gradient(135deg,#ffd700,#ff9800);
-color:white;
-padding:4px 8px;
-border-radius:12px;
-font-size:9px;
-font-weight:bold;
-">
-👑 VIP
-</span>
-`
-:
-""
-}
-
-</div>
-
-<div style="
-margin-top:4px;
-font-size:12px;
-color:#4caf50;
-font-weight:bold;
-">
-● Active
-</div>
-
-<div style="
-margin-top:2px;
-font-size:11px;
-color:#999;
-">
-❤️ Matched with you
-</div>
-
-<div style="
-margin-top:2px;
-font-size:10px;
-color:#aaa;
-">
-✨ Matched recently
-</div>
-
-<p style="
-margin:4px 0;
-font-size:12px;
-color:#777;
-">
-📍 ${p.city}
-</p>
-
-</div>
-
-</div>
-
-<div
-style="
-position:relative;
-z-index:10;
-display:flex;
-align-items:center;
-gap:8px;
-width:100%;
-height:42px;
-margin-top:10px;
-box-sizing:border-box;
-">
-
-<button
-type="button"
-onclick="openMatchChat('${p.name}')"
-style="
-position:relative;
-z-index:20;
-display:flex !important;
-align-items:center !important;
-justify-content:center !important;
-width:calc(100% - 56px) !important;
-height:42px !important;
-min-width:0 !important;
-flex:1 1 auto !important;
-box-sizing:border-box !important;
-border:0 !important;
-border-radius:18px !important;
-background:linear-gradient(135deg,#ff1744,#ff4081) !important;
-color:white !important;
-font-size:13px !important;
-font-weight:bold !important;
-cursor:pointer !important;
-pointer-events:auto !important;
-">
-💬 Chat
-</button>
-
-<button
-type="button"
-onclick="matchProfileOptions('${p.name}')"
-style="
-position:relative;
-z-index:20;
-display:flex !important;
-align-items:center !important;
-justify-content:center !important;
-width:48px !important;
-min-width:48px !important;
-max-width:48px !important;
-height:42px !important;
-flex:0 0 48px !important;
-box-sizing:border-box !important;
-border:1px solid #ff1744 !important;
-border-radius:18px !important;
-background:white !important;
-color:#ff1744 !important;
-font-size:22px !important;
-font-weight:bold !important;
-cursor:pointer !important;
-pointer-events:auto !important;
-">
-⋮
-</button>
-
-</div>
-
-</div>
-
-`;
-
-}).join("")
-}
-
-<br>
-
-<button
-type="button"
-onclick="rabtaHome()"
-style="
-position:relative;
-z-index:20;
-display:block !important;
-width:100% !important;
-height:auto !important;
-padding:11px !important;
-box-sizing:border-box !important;
-border:0 !important;
-border-radius:22px !important;
-background:#eee !important;
-color:#333 !important;
-font-weight:bold !important;
-cursor:pointer !important;
-pointer-events:auto !important;
-">
-🏠 Home
-</button>
-
-</div>
-
-`;
-
-  }
   function matchProfileOptions(name){
 
 let oldBox =
@@ -7951,78 +7665,6 @@ ${dailyConnectionText}
 </div>
 
 
-<!-- VIP STATS -->
-
-<div style="
-display:flex;
-gap:10px;
-margin:12px 0;
-">
-
-<div
-onclick="window.rabtaMatches()"
-style="
-flex:1;
-padding:14px 8px;
-border-radius:20px;
-background:white;
-border:1px solid #ffe1e8;
-text-align:center;
-cursor:pointer;
-">
-
-<div style="font-size:24px;">
-💞
-</div>
-
-<b style="font-size:12px;">
-My Matches
-</b>
-
-<p style="
-margin:5px 0 0;
-color:#ff1744;
-font-size:22px;
-font-weight:bold;
-">
-${matchesList.length}
-</p>
-
-</div>
-
-
-<div
-onclick="window.chat()"
-style="
-flex:1;
-padding:14px 8px;
-border-radius:20px;
-background:white;
-border:1px solid #ffe1e8;
-text-align:center;
-cursor:pointer;
-">
-
-<div style="font-size:24px;">
-💬
-</div>
-
-<b style="font-size:12px;">
-New Messages
-</b>
-
-<p style="
-margin:5px 0 0;
-color:#ff1744;
-font-size:22px;
-font-weight:bold;
-">
-${unreadCount}
-</p>
-
-</div>
-
-</div>
 
 
 <!-- YOUR VIBE -->
@@ -9292,22 +8934,6 @@ display:flex;
 gap:8px;
 ">
 
-<button
-type="button"
-onclick="window.rabtaMatches()"
-style="
-flex:1;
-border:0;
-border-radius:17px;
-background:#fff5f8;
-color:#ff1744;
-padding:12px 5px;
-font-size:11px;
-font-weight:bold;
-">
-❤️<br>
-Matches
-</button>
 
 <button
 type="button"
@@ -13014,8 +12640,14 @@ gap:14px;
 </div>
 </div>
 
-<div id="discoverSearchResults"></div>
+<!-- ❤️ Rabta Vibe Match -->
+<div id="rabtaVibeMatchSection"></div>
 
+<!-- 📍 Rabta Near You -->
+<div id="rabtaNearProfilesSection"></div>
+
+<!-- 🔍 Search Results -->
+<div id="discoverSearchResults"></div>
 
 
 <button
@@ -13061,8 +12693,11 @@ font-weight:bold;
 `;
 
     filterDiscoverProfiles("");
-    rabtaRenderStories();
-    window.rabtaShowPublicStoriesTestButton();
+
+
+
+rabtaRenderStories();
+window.rabtaShowPublicStoriesTestButton();
     }
 
      // ❤️ Rabta Story Reaction — Firebase
@@ -21800,10 +21435,39 @@ if(!currentUser || !currentUser.uid){
   return;
 }
 
-// ❤️ Discover mein apni stories hide karo
+// ❤️ Discover Stories: Sirf khud Add kiye hue friends
+
+if(typeof window.rabtaLoadProfileConnections !== "function"){
+  throw new Error("Firebase Connections Loader nahi mila.");
+}
+
+// Firebase se apne added friends load karo
+const myConnections =
+  await window.rabtaLoadProfileConnections(currentUser.uid);
+
+// Sirf khud Add kiye hue users ki UID
+const myAddedFriends = new Set(
+  (myConnections.added || []).map(function(person){
+    return String(person.uid || "");
+  }).filter(Boolean)
+);
+
+// Apni aur non-added users ki stories hide karo
 cloudStories = cloudStories.filter(function(story){
-  return story.ownerUid !== currentUser.uid;
+
+  const ownerUid = String(story.ownerUid || "");
+
+  return (
+    ownerUid !== currentUser.uid &&
+    myAddedFriends.has(ownerUid)
+  );
+
 });
+
+console.log(
+  "❤️ Discover: Added friends ki Firebase stories:",
+  cloudStories.length
+);
 
 if(cloudStories.length === 0){
   console.log("❤️ Abhi kisi doosre user ki public story nahi hai.");
@@ -21860,6 +21524,15 @@ console.log("❤️ Rabta Story Music:", {
 
     });
 
+    // ❤️ Discover Story Owners: Firebase Public Profiles
+const cloudProfiles =
+  await window.rabtaLoadPublicProfiles();
+
+console.log(
+  "Rabta Story Owner Profiles:",
+  cloudProfiles.length
+);
+    
     // ❤️ Ek account = ek story circle
     const cloudHTML = ownerGroups.map(function(group, index){
 
@@ -21870,9 +21543,7 @@ console.log("❤️ Rabta Story Music:", {
       const storyType = firstStory.type || "image";
 
       // ❤️ Firebase profile se asli naam nikalo
-const ownerProfile = (
-  window.rabtaCloudProfiles || []
-).find(function(profile){
+const ownerProfile = cloudProfiles.find(function(profile){
   return profile.uid === group.uid;
 });
 
@@ -23922,6 +23593,78 @@ async function filterDiscoverProfiles(value){
 
     });
 
+    // ❤️ Rabta Smart Discover Sorting
+
+const myProfileSnapshot = await getDoc(
+  doc(
+    window.rabtaDB,
+    "publicProfiles",
+    currentUser.uid
+  )
+);
+
+let myProfile = {};
+
+if(myProfileSnapshot.exists()){
+  myProfile = myProfileSnapshot.data();
+}
+
+const myVibes = Array.isArray(myProfile.vibes)
+  ? myProfile.vibes.map(v => String(v).toLowerCase())
+  : [];
+
+const myLookingFor = String(myProfile.lookingFor || "").toLowerCase();
+
+const myCity = String(myProfile.city || "").trim().toLowerCase();
+
+// ❤️ Match Score + Nearby Priority
+cloudResults.sort(function(a, b){
+
+  function calculateScore(profile){
+
+    const theirVibes = Array.isArray(profile.vibes)
+      ? profile.vibes.map(v => String(v).toLowerCase())
+      : [];
+
+    const commonVibes = myVibes.filter(function(v){
+      return theirVibes.includes(v);
+    });
+
+    const vibeScore = myVibes.length
+      ? (commonVibes.length / myVibes.length) * 70
+      : 0;
+
+    const theirLookingFor =
+      String(profile.lookingFor || "").toLowerCase();
+
+    const lookingScore =
+      myLookingFor && theirLookingFor &&
+      myLookingFor === theirLookingFor
+        ? 30
+        : 0;
+
+    return vibeScore + lookingScore;
+  }
+
+  const scoreA = calculateScore(a);
+  const scoreB = calculateScore(b);
+
+  // Pehle highest Vibe Match
+  if(scoreA !== scoreB){
+    return scoreB - scoreA;
+  }
+
+  // Same city ko priority
+  const cityA =
+    String(a.city || "").trim().toLowerCase() === myCity;
+
+  const cityB =
+    String(b.city || "").trim().toLowerCase() === myCity;
+
+  return Number(cityB) - Number(cityA);
+
+});
+    
     // ❤️ No profiles found
     if(cloudResults.length === 0){
 
@@ -24396,13 +24139,8 @@ const requestSnapshot = await window.rabtaFirebaseGetDoc(requestRef);
   `;
   }
 
+  // ❤️ Rabta Connection Requests — Firebase Only
 async function rabtaConnectionRequests(){
-
-  let localRequests = JSON.parse(
-    localStorage.getItem("rabtaConnectionRequests") || "[]"
-  );
-
-  let cloudRequests = [];
 
   const app = document.getElementById("app");
 
@@ -24411,101 +24149,223 @@ async function rabtaConnectionRequests(){
   app.innerHTML = `
     <div style="padding:20px;text-align:center;">
       <h2 style="color:#ff1744;">❤️ Connection Requests</h2>
-      <p>Requests load ho rahi hain...</p>
+      <p>Firebase se requests load ho rahi hain...</p>
     </div>
   `;
 
-  if(
-    typeof window.rabtaLoadIncomingConnectionRequests === "function"
-  ){
-    cloudRequests =
+  try{
+
+    if(
+      typeof window.rabtaLoadIncomingConnectionRequests !== "function"
+    ){
+      throw new Error("Firebase request loader nahi mila.");
+    }
+
+    const pendingCloud =
       await window.rabtaLoadIncomingConnectionRequests();
+
+    const requests = Array.isArray(pendingCloud)
+      ? pendingCloud
+      : [];
+
+    app.innerHTML = `
+      <div style="
+        padding:16px;
+        background:#fff5f8;
+        min-height:100vh;
+      ">
+
+        <h2 style="
+          color:#ff1744;
+          text-align:center;
+        ">
+          ❤️ Connection Requests (${requests.length})
+        </h2>
+
+        ${
+          requests.length === 0
+          ? `
+            <p style="
+              text-align:center;
+              color:#777;
+              padding:25px;
+            ">
+              Abhi koi pending request nahi hai ❤️
+            </p>
+          `
+          : ""
+        }
+
+        ${requests.map(function(r){
+
+          const safeName = String(
+            r.name || "Rabta User"
+          );
+
+          const safePhoto = String(
+            r.photo || ""
+          );
+
+          const safeRequestId = String(
+            r.requestId || ""
+          );
+
+          const photoHTML = safePhoto
+            ? `
+              <img
+                src="${safePhoto.replace(/&/g,"&amp;").replace(/"/g,"&quot;").replace(/</g,"&lt;")}"
+                alt="Profile Photo"
+                style="
+                  width:65px;
+                  height:65px;
+                  border-radius:50%;
+                  object-fit:cover;
+                  border:2px solid #ff4081;
+                "
+              >
+            `
+            : `
+              <div style="
+                width:65px;
+                height:65px;
+                border-radius:50%;
+                background:#ffe1e8;
+                display:flex;
+                align-items:center;
+                justify-content:center;
+                font-size:30px;
+              ">
+                ❤️
+              </div>
+            `;
+
+          const encodedName = encodeURIComponent(safeName);
+          const encodedId = encodeURIComponent(safeRequestId);
+
+          return `
+            <div style="
+              display:flex;
+              align-items:center;
+              gap:13px;
+              background:white;
+              padding:15px;
+              margin:12px 0;
+              border-radius:16px;
+              box-shadow:0 2px 8px #0001;
+            ">
+
+              ${photoHTML}
+
+              <div style="flex:1;min-width:0;">
+
+                <h3 style="
+                  color:#333;
+                  margin:0 0 7px;
+                  overflow-wrap:anywhere;
+                ">
+                  ${safeName.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;")}
+                </h3>
+
+                <p style="
+                  color:#777;
+                  margin:0 0 10px;
+                  font-size:13px;
+                ">
+                  ❤️ Firebase connection request
+                </p>
+
+                <button
+                  onclick="rabtaHandleFirebaseIncoming(
+                    decodeURIComponent('${encodedId}'),
+                    'confirmed',
+                    decodeURIComponent('${encodedName}')
+                  )"
+                  style="
+                    background:#ff1744;
+                    color:white;
+                    border:0;
+                    border-radius:20px;
+                    padding:9px 14px;
+                  ">
+                  ✅ Confirm
+                </button>
+
+                <button
+                  onclick="rabtaHandleFirebaseIncoming(
+                    decodeURIComponent('${encodedId}'),
+                    'rejected',
+                    decodeURIComponent('${encodedName}')
+                  )"
+                  style="
+                    background:#777;
+                    color:white;
+                    border:0;
+                    border-radius:20px;
+                    padding:9px 14px;
+                    margin-left:5px;
+                  ">
+                  ❌ Reject
+                </button>
+
+              </div>
+
+            </div>
+          `;
+
+        }).join("")}
+
+        <button
+          onclick="discover()"
+          style="
+            width:100%;
+            padding:12px;
+            margin-top:15px;
+            background:#ff1744;
+            color:white;
+            border:0;
+            border-radius:25px;
+          ">
+          ⬅️ Back to Discover
+        </button>
+
+      </div>
+    `;
+
+  }catch(error){
+
+    console.error(
+      "Rabta Connection Requests Screen Error:",
+      error
+    );
+
+    app.innerHTML = `
+      <div style="padding:25px;text-align:center;">
+        <h2 style="color:#ff1744;">
+          ❤️ Connection Requests
+        </h2>
+        <p style="color:#777;">
+          Requests load nahi ho paayi.
+        </p>
+        <p style="color:#999;font-size:13px;">
+          ${String(error.message || error)}
+        </p>
+        <button onclick="rabtaConnectionRequests()"
+          style="
+            background:#ff1744;
+            color:white;
+            border:0;
+            border-radius:20px;
+            padding:10px 20px;
+          ">
+          🔄 Retry
+        </button>
+      </div>
+    `;
+
   }
 
-  let pendingLocal = localRequests.filter(
-    r => r.status === "pending"
-  );
-
-  let pendingCloud = Array.isArray(cloudRequests)
-    ? cloudRequests
-    : [];
-
-  app.innerHTML = `
-    <div style="padding:16px;background:#fff5f8;min-height:100vh;">
-
-      <h2 style="color:#ff1744;text-align:center;">
-        ❤️ Connection Requests (${pendingLocal.length + pendingCloud.length})
-      </h2>
-
-      ${
-        pendingCloud.length === 0 && pendingLocal.length === 0
-        ? `<p style="text-align:center;color:#777;">
-             Abhi koi pending request nahi hai ❤️
-           </p>`
-        : ""
-      }
-
-      ${pendingCloud.map(r => `
-        <div style="
-          background:white;
-          padding:15px;
-          margin:12px 0;
-          border-radius:16px;
-          box-shadow:0 2px 8px #0001;
-        ">
-          <h3 style="color:#333;margin-top:0;">
-            ${String(r.name || "Rabta User").replace(/</g,"&lt;").replace(/>/g,"&gt;")}
-          </h3>
-
-          <p style="color:#777;">❤️ Firebase connection request</p>
-
-          <button
-            onclick="rabtaHandleFirebaseIncoming('${r.requestId}','confirmed','${String(r.name || "Rabta User").replace(/'/g,"\\'")}')"
-            style="background:#ff1744;color:white;border:0;border-radius:20px;padding:10px 16px;">
-            ✅ Confirm
-          </button>
-
-          <button
-            onclick="rabtaHandleFirebaseIncoming('${r.requestId}','rejected','${String(r.name || "Rabta User").replace(/'/g,"\\'")}')"
-            style="background:#777;color:white;border:0;border-radius:20px;padding:10px 16px;margin-left:6px;">
-            ❌ Reject
-          </button>
-        </div>
-      `).join("")}
-
-      ${pendingLocal.map(r => `
-        <div style="
-          background:white;
-          padding:15px;
-          margin:12px 0;
-          border-radius:16px;
-        ">
-          <h3>${String(r.name || "User").replace(/</g,"&lt;").replace(/>/g,"&gt;")}</h3>
-
-          <button
-            onclick="rabtaHandleRequest('${String(r.name || "").replace(/'/g,"\\'")}','confirmed')"
-            style="background:#ff1744;color:white;border:0;border-radius:20px;padding:10px 16px;">
-            ✅ Confirm
-          </button>
-
-          <button
-            onclick="rabtaHandleRequest('${String(r.name || "").replace(/'/g,"\\'")}','rejected')"
-            style="background:#777;color:white;border:0;border-radius:20px;padding:10px 16px;margin-left:6px;">
-            ❌ Reject
-          </button>
-        </div>
-      `).join("")}
-
-      <button
-        onclick="discover()"
-        style="width:100%;padding:12px;margin-top:15px;background:#ff1744;color:white;border:0;border-radius:25px;">
-        ⬅️ Back to Discover
-      </button>
-
-    </div>
-  `;
 }
-
+  
 function rabtaHandleRequest(name, status){
 
 let requests = JSON.parse(
@@ -24565,240 +24425,6 @@ rabtaConnectionRequests();
 
 }
 
-  function showSuperLikes(){
-
-let superLikes =
-JSON.parse(localStorage.getItem("superLikes") || "[]");
-
-document.getElementById("app").innerHTML = `
-
-<div class="card" style="
-border-radius:28px;
-padding:16px;
-background:linear-gradient(180deg,#ffffff,#fff8fa);
-border:1px solid #ffe1e8;
-box-shadow:0 10px 30px rgba(255,23,68,.10);
-">
-
-<h2 style="
-margin:5px 0 15px;
-color:#d89b00;
-">
-💎 My Super Likes
-</h2>
-
-${
-superLikes.length === 0
-?
-`
-<div style="
-text-align:center;
-padding:30px 10px;
-color:#999;
-">
-<div style="font-size:45px;">💎</div>
-
-<p>
-Abhi kisi profile ko Super Like nahi kiya ❤️
-</p>
-
-<button
-type="button"
-onclick="discover()"
-style="
-border:0;
-background:#ff1744;
-color:white;
-padding:11px 22px;
-border-radius:22px;
-font-weight:bold;
-">
-🔍 Discover
-</button>
-
-</div>
-`
-:
-superLikes.map(function(p){
-
-let original =
-profiles.find(x => x.name === p.name);
-
-if(!original) return "";
-
-return `
-<div
-style="
-display:flex;
-align-items:center;
-gap:12px;
-padding:12px;
-margin-bottom:10px;
-background:#fffafa;
-border:1px solid #ffe1e8;
-border-radius:20px;
-">
-
-<img
-src="${original.photo || ""}"
-style="
-width:58px;
-height:58px;
-border-radius:50%;
-object-fit:cover;
-border:3px solid #ffd700;
-">
-
-<div style="flex:1;">
-
-<div style="
-font-weight:bold;
-font-size:15px;
-">
-${original.name}, ${original.age} 💎
-</div>
-
-<div style="
-color:#999;
-font-size:11px;
-margin-top:4px;
-">
-📍 ${original.city}
-</div>
-
-<div style="
-color:#aaa;
-font-size:10px;
-margin-top:4px;
-">
-💎 Sent ${
-p.time || p.superLikedAt
-? new Date(p.time || p.superLikedAt).toLocaleString([], {
-day:"2-digit",
-month:"short",
-hour:"2-digit",
-minute:"2-digit"
-})
-: "Recently"
-}
-</div>
-
-</div>
-
-<div style="
-display:flex;
-gap:6px;
-">
-
-<button
-type="button"
-onclick="openSuperLikeProfile('${original.name}')"
-style="
-border:0;
-background:linear-gradient(135deg,#ffd700,#ff9800);
-color:white;
-padding:9px 12px;
-border-radius:18px;
-font-weight:bold;
-font-size:11px;
-">
-View
-</button>
-
-<button
-type="button"
-onclick="removeSuperLike('${original.name}')"
-style="
-border:1px solid #ff1744;
-background:white;
-color:#ff1744;
-padding:9px 10px;
-border-radius:18px;
-font-weight:bold;
-font-size:11px;
-">
-Remove
-</button>
-
-</div>
-
-</div>
-`;
-
-}).join("")
-}
-
-<button
-  type="button"
-  onclick="
-    window.rabtaOpenMyProfile().then(()=>{
-      const menu = document.getElementById('rabtaProfileMenu');
-      if(menu){
-        menu.style.display = 'block';
-      }
-    });
-  "
-  style="
-    width:100%;
-    border:0;
-    background:#eee;
-    color:#555;
-    padding:11px;
-    border-radius:22px;
-    font-weight:bold;
-    margin-top:8px;
-  "
->
-  ← Back
-</button>
-
-</div>
-
-`;
-
-  }
-  function openSuperLikeProfile(name){
-
-let index =
-profiles.findIndex(p => p.name === name);
-
-if(index === -1){
-alert("Profile nahi mili ❤️");
-return;
-}
-
-currentProfile = index;
-
-viewFullProfile();
-
-  }
-  function removeSuperLike(name){
-
-let superLikes =
-JSON.parse(localStorage.getItem("superLikes") || "[]");
-
-let confirmRemove =
-confirm(
-"💎 Super Like Remove\n\n" +
-name +
-" ko Super Likes list se remove karna hai?"
-);
-
-if(!confirmRemove){
-return;
-}
-
-superLikes =
-superLikes.filter(x => x.name !== name);
-
-localStorage.setItem(
-"superLikes",
-JSON.stringify(superLikes)
-);
-
-showSuperLikes();
-
-  }
  function  nextProfile(){
 
 let blockedProfiles =
@@ -28820,23 +28446,6 @@ font-size:15px;
 font-weight:bold;
 box-shadow:0 5px 14px rgba(255,23,68,0.10);">
 ⚙️ Settings
-</button>
-
-<button
-type="button"
-onclick="showSuperLikes()"
-style="
-width:90%;
-padding:13px;
-margin-top:10px;
-border:1px solid #ffd54f;
-border-radius:24px;
-background:linear-gradient(135deg,#fff8dc,#fff3b0);
-color:#9a6b00;
-font-size:15px;
-font-weight:bold;
-box-shadow:0 5px 14px rgba(255,193,7,0.12);">
-💎 My Super Likes
 </button>
 
 <button
@@ -41282,7 +40891,254 @@ photo: data.photo || data.profilePhoto || data.photoURL || ""
 
   }
 
+// ❤️ Rabta Discover Recommendations
+window.rabtaLoadDiscoverRecommendations = async function(){
 
+  const vibeBox = document.getElementById("rabtaVibeMatchSection");
+  const nearBox = document.getElementById("rabtaNearProfilesSection");
+
+  if(!vibeBox || !nearBox) return;
+
+  vibeBox.innerHTML = "";
+  nearBox.innerHTML = "";
+
+  try{
+
+    const user = window.rabtaAuth?.currentUser;
+
+    if(!user) return;
+
+const mySnapshot = await getDoc(
+  doc(
+    window.rabtaDB,
+    "publicProfiles",
+    user.uid
+  )
+);
+  
+    if(!mySnapshot.exists()){
+      console.log("Rabta: Apni public profile nahi mili.");
+      return;
+    }
+
+    const me = mySnapshot.data();
+
+    // Firebase se sab public profiles load karo
+    const profiles = await window.rabtaLoadPublicProfiles();
+
+    // Connection status load karo
+    if(typeof window.rabtaLoadMyConnectionStatuses === "function"){
+      window.rabtaConnectionStatuses =
+        await window.rabtaLoadMyConnectionStatuses();
+    }
+
+    const statuses = window.rabtaConnectionStatuses || {};
+
+    let myConnections = {
+      added: [],
+      addedYou: []
+    };
+
+    if(typeof window.rabtaLoadProfileConnections === "function"){
+      myConnections =
+        await window.rabtaLoadProfileConnections(user.uid);
+    }
+
+    const hiddenUids = new Set([
+      ...(myConnections.added || []),
+      ...(myConnections.addedYou || [])
+    ].map(function(person){
+      return String(person.uid);
+    }));
+
+    const eligible = profiles.filter(function(p){
+
+      const uid = String(p.uid || "");
+
+      return (
+        uid !== user.uid &&
+        statuses[uid] !== "confirmed" &&
+        !hiddenUids.has(uid)
+      );
+
+    });
+
+    // ❤️ Vibe Match Calculation
+    const myVibes = Array.isArray(me.vibes)
+      ? me.vibes.map(v => String(v).toLowerCase())
+      : [];
+
+    const myLookingFor = String(me.lookingFor || "").toLowerCase();
+
+    const vibeMatches = eligible.map(function(p){
+
+      const theirVibes = Array.isArray(p.vibes)
+        ? p.vibes.map(v => String(v).toLowerCase())
+        : [];
+
+      const commonVibes = myVibes.filter(function(v){
+        return theirVibes.includes(v);
+      });
+
+      const vibeScore = myVibes.length
+        ? (commonVibes.length / myVibes.length) * 70
+        : 0;
+
+      const theirLookingFor =
+        String(p.lookingFor || "").toLowerCase();
+
+      const lookingScore =
+        myLookingFor && theirLookingFor &&
+        myLookingFor === theirLookingFor
+          ? 30
+          : 0;
+
+      return {
+        profile: p,
+        score: Math.round(vibeScore + lookingScore)
+      };
+
+    }).filter(function(item){
+      return item.score > 0;
+    }).sort(function(a,b){
+      return b.score - a.score;
+    });
+
+    // 📍 Near You: Same city
+    const myCity = String(me.city || "").trim().toLowerCase();
+
+    const nearProfiles = eligible.filter(function(p){
+
+      return (
+        myCity &&
+        String(p.city || "").trim().toLowerCase() === myCity
+      );
+
+    });
+
+    // ❤️ Profile Cards
+    function makeCard(p, score){
+
+      const photo = p.photo ||
+        "https://via.placeholder.com/150?text=Profile";
+
+      return `
+        <div style="
+          border:1px solid #ffd5df;
+          border-radius:13px;
+          overflow:hidden;
+          background:white;
+          text-align:center;
+          min-width:0;
+        ">
+
+          <img
+            src="${photo}"
+            style="
+              width:100%;
+              height:105px;
+              object-fit:cover;
+            "
+          >
+
+          <div style="padding:7px;">
+
+            <div style="
+              font-size:12px;
+              font-weight:bold;
+              overflow-wrap:anywhere;
+            ">
+              ${p.name || "Rabta User"}
+            </div>
+
+            ${score !== null ? `
+              <div style="
+                color:#ff1744;
+                font-size:11px;
+                font-weight:bold;
+                margin-top:4px;
+              ">
+                ❤️ ${score}% Match
+              </div>
+            ` : ""}
+
+            <button
+              onclick="rabtaViewCloudProfile('${p.uid}')"
+              style="
+                width:100%;
+                margin-top:7px;
+                border:0;
+                border-radius:14px;
+                padding:6px;
+                background:#ff1744;
+                color:white;
+                font-size:11px;
+              ">
+              View Profile
+            </button>
+
+          </div>
+        </div>
+      `;
+    }
+
+    vibeBox.innerHTML = `
+      <h3 style="color:#ff1744;margin:18px 0 10px;">
+        ❤️ Vibe Match
+      </h3>
+
+      <div style="
+        display:grid;
+        grid-template-columns:repeat(3,minmax(0,1fr));
+        gap:8px;
+      ">
+        ${
+          vibeMatches.length
+            ? vibeMatches.slice(0,9).map(function(item){
+                return makeCard(item.profile,item.score);
+              }).join("")
+            : `<p style="color:#888;font-size:12px;">Abhi Vibe Match profiles nahi mili ❤️</p>`
+        }
+      </div>
+    `;
+
+    nearBox.innerHTML = `
+      <h3 style="color:#ff1744;margin:20px 0 10px;">
+        📍 Near You
+      </h3>
+
+      <div style="
+        display:grid;
+        grid-template-columns:repeat(3,minmax(0,1fr));
+        gap:8px;
+      ">
+        ${
+          nearProfiles.length
+            ? nearProfiles.slice(0,9).map(function(p){
+                return makeCard(p,null);
+              }).join("")
+            : `<p style="color:#888;font-size:12px;">Aapke city mein abhi profiles nahi mili ❤️</p>`
+        }
+      </div>
+    `;
+
+    console.log("Rabta recommendations loaded ❤️");
+
+  }catch(error){
+
+    console.error("Rabta Recommendations Error:",error);
+
+    vibeBox.innerHTML = `
+      <p style="color:#ff1744;">Vibe Match load nahi ho saka.</p>
+    `;
+
+    nearBox.innerHTML = `
+      <p style="color:#ff1744;">Near You load nahi ho saka.</p>
+    `;
+
+  }
+
+};
 
 };// ❤️ Rabta Discover Cloud Profiles
 window.rabtaRefreshDiscoverProfiles = async function(){
@@ -41369,7 +41225,7 @@ window.rabtaSendFirebaseConnectionRequest = async function(receiverUid){
 
 };
 
-  // ❤️ Rabta: Incoming Connection Requests — Firebase Only
+// ❤️ Rabta: Incoming Connection Requests — Firebase Only
 window.rabtaLoadIncomingConnectionRequests = async function(){
 
   const user = window.rabtaAuth?.currentUser;
@@ -41381,7 +41237,6 @@ window.rabtaLoadIncomingConnectionRequests = async function(){
 
   try{
 
-    // ❤️ Firebase query
     const requestsQuery = window.rabtaFirebaseQuery(
       window.rabtaFirebaseCollection(
         window.rabtaDB,
@@ -41394,11 +41249,9 @@ window.rabtaLoadIncomingConnectionRequests = async function(){
       )
     );
 
-    // ❤️ Firebase se received requests load
     const snapshot =
       await window.rabtaFirebaseGetDocs(requestsQuery);
 
-    // ❤️ Firebase public profiles
     const profiles =
       await window.rabtaLoadPublicProfiles();
 
@@ -41416,7 +41269,15 @@ window.rabtaLoadIncomingConnectionRequests = async function(){
           senderUid: data.senderUid,
           receiverUid: data.receiverUid,
           status: data.status,
-          name: sender ? sender.name : "Rabta User"
+
+          name: sender
+            ? sender.name
+            : "Rabta User",
+
+          photo: sender
+            ? sender.photo
+            : ""
+
         };
 
       })
@@ -41439,6 +41300,7 @@ window.rabtaLoadIncomingConnectionRequests = async function(){
   }
 
 };
+
 
 
   // ❤️ Rabta: Connection Statuses — Firebase Only
@@ -42643,8 +42505,6 @@ const myHighlights =
   <div onclick="document.getElementById('rabtaProfileMenu').style.display='none'; rabtaShowStoryArchive()" class="rabtaMenuItem">📁 Story Archive</div>
 
   <div onclick="document.getElementById('rabtaProfileMenu').style.display='none'; showFavorites()" class="rabtaMenuItem">⭐ My Favorites</div>
-
-  <div onclick="document.getElementById('rabtaProfileMenu').style.display='none'; showSuperLikes()" class="rabtaMenuItem">💎 My Super Likes</div>
 
   <div onclick="document.getElementById('rabtaProfileMenu').style.display='none'; settings()" class="rabtaMenuItem">⚙️ Settings</div>
 
