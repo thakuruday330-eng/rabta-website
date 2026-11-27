@@ -41289,12 +41289,25 @@ window.rabtaSendFirebaseConnectionRequest = async function(receiverUid){
     const existingRequest =
       await window.rabtaFirebaseGetDoc(requestRef);
 
-    if(existingRequest.exists()){
+    // ❤️ Existing Request Status Check
+if(existingRequest.exists()){
 
-      alert("❤️ Is user ke saath request pehle se maujood hai.");
-      return false;
+  const oldData = existingRequest.data();
 
-    }
+  if(
+    oldData.status === "pending" ||
+    oldData.status === "confirmed"
+  ){
+
+    alert(
+      "❤️ Is user ke saath connection pehle se maujood hai."
+    );
+
+    return false;
+  }
+
+  // rejected request ko dobara Add karne denge
+}
 
     await window.rabtaFirebaseSetDoc(requestRef, {
 
