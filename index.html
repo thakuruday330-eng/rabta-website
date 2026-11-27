@@ -42295,12 +42295,13 @@ window.rabtaResendVerification = async function(){
 
     await signOut(window.rabtaAuth);
 
-  } catch(error) {
+   } catch(error) {
 
-    console.error("Resend Verification Error:", error);
+    console.error("Rabta Verification Error:", error);
 
-        rabtaShowLoginError(
-      "Email ya password check karo. Verification email nahi bheji ja saki."
+    alert(
+      "Firebase Error Code: " + error.code +
+      "\n\nError Message: " + error.message
     );
 
   } finally {
