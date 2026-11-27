@@ -25550,69 +25550,182 @@ window.rabtaOpeningProfileUid = null;
     return;
   }
 
-  // ❤️ Connections aur Posts/Reels load
+  // ❤️ Profile Connections Load
   let connectionLists =
     await window.rabtaLoadProfileConnections(p.uid);
 
-  let allPosts = await window.rabtaLoadProfilePosts(p.uid, "post");
-
-let allReels = await window.rabtaLoadProfilePosts(p.uid, "reel");
-
-// ❤️ Viewed Profile ke Firebase Highlights
-let profileHighlights =
-  await window.rabtaLoadProfileHighlights(p.uid);
-  
   let isVIP = p.name === "Priya";
 
-    // ❤️ Current user ki apni Firebase connection lists
-const currentUid = window.rabtaAuth.currentUser.uid;
+  // ❤️ Current User ki Connection Lists
+  const currentUid = window.rabtaAuth.currentUser.uid;
 
-const myConnectionLists =
-  await window.rabtaLoadProfileConnections(currentUid);
+  const myConnectionLists =
+    await window.rabtaLoadProfileConnections(currentUid);
 
-const isInMyAdded = myConnectionLists.added.some(
-  function(person){
-    return String(person.uid) === String(p.uid);
-  }
-);
-
-const isInMyAddedYou = myConnectionLists.addedYou.some(
-  function(person){
-    return String(person.uid) === String(p.uid);
-  }
-);
-
-const myConnectionStatus =
-  isInMyAdded
-    ? "confirmed"
-    : isInMyAddedYou
-      ? "addBack"
-      : "";
-
-const isOwnProfile =
-  String(currentUid) === String(p.uid);
-  
-// ❤️ Firebase se actual Public / Private status
-const visibilityRef = window.rabtaFirebaseDoc(
-  window.rabtaDB,
-  "publicProfiles",
-  p.uid
-);
-
-const visibilityDoc =
-  await window.rabtaFirebaseGetDoc(visibilityRef);
-
-const visibilityData = visibilityDoc.exists()
-  ? visibilityDoc.data()
-  : {};
-
-const isPrivateProfile =
-  !isOwnProfile &&
-  (
-    visibilityData.profileVisible === false ||
-    visibilityData.profileVisible === "off"
+  const isInMyAdded = myConnectionLists.added.some(
+    function(person){
+      return String(person.uid) === String(p.uid);
+    }
   );
 
+  const isInMyAddedYou = myConnectionLists.addedYou.some(
+    function(person){
+      return String(person.uid) === String(p.uid);
+    }
+  );
+
+  const myConnectionStatus =
+    isInMyAdded
+      ? "confirmed"
+      : isInMyAddedYou
+        ? "addBack"
+        : "";
+
+  const isOwnProfile =
+    String(currentUid) === String(p.uid);
+
+  // ❤️ Firebase se Public / Private Status
+  const visibilityRef = window.rabtaFirebaseDoc(
+    window.rabtaDB,
+    "publicProfiles",
+    p.uid
+  );
+
+  const visibilityDoc =
+    await window.rabtaFirebaseGetDoc(visibilityRef);
+
+  const visibilityData = visibilityDoc.exists()
+    ? visibilityDoc.data()
+    : {};
+
+    // ❤️ Connections Load
+  let connectionLists =
+    await window.rabtaLoadProfileConnections(p.uid);
+
+  let isVIP = p.name === "Priya";
+
+  // ❤️ Current User Connection Lists
+  const currentUid = window.rabtaAuth.currentUser.uid;
+
+  const myConnectionLists =
+    await window.rabtaLoadProfileConnections(currentUid);
+
+  const isInMyAdded = myConnectionLists.added.some(
+    function(person){
+      return String(person.uid) === String(p.uid);
+    }
+  );
+
+  const isInMyAddedYou = myConnectionLists.addedYou.some(
+    function(person){
+      return String(person.uid) === String(p.uid);
+    }
+  );
+
+  const myConnectionStatus =
+    isInMyAdded
+      ? "confirmed"
+      : isInMyAddedYou
+        ? "addBack"
+        : "";
+
+  const isOwnProfile =
+    String(currentUid) === String(p.uid);
+
+  // ❤️ Firebase Public / Private Status
+  const visibilityRef = window.rabtaFirebaseDoc(
+    window.rabtaDB,
+    "publicProfiles",
+    p.uid
+  );
+
+  const visibilityDoc =
+    await window.rabtaFirebaseGetDoc(visibilityRef);
+
+  const visibilityData = visibilityDoc.exists()
+    ? visibilityDoc.data()
+    : {};
+
+  // ❤️ Private Profile — Confirmed Friend Unlock
+  const isPrivateProfile =
+    !isOwnProfile &&
+    myConnectionStatus !== "confirmed" &&
+    (
+      visibilityData.profileVisible === false ||
+      visibilityData.profileVisible === "off"
+    );
+
+    // ❤️ Content Variables
+  let allPosts = [];
+  let allReels = [];
+  let profileHighlights = [];
+
+  // ❤️ Combined Posts + Reels Count
+  let totalContentCount = 0;
+
+  // ❤️ Firebase se dono collections ka total count
+  try {
+
+    const postsCountQuery =
+      window.rabtaFirebaseQuery(
+        window.rabtaFirebaseCollection(
+          window.rabtaDB,
+          "posts"
+        ),
+        window.rabtaFirebaseWhere(
+          "ownerUid",
+          "==",
+          p.uid
+        )
+      );
+
+    const reelsCountQuery =
+      window.rabtaFirebaseQuery(
+        window.rabtaFirebaseCollection(
+          window.rabtaDB,
+          "reels"
+        ),
+        window.rabtaFirebaseWhere(
+          "ownerUid",
+          "==",
+          p.uid
+        )
+      );
+
+    const countResults = await Promise.all([
+      window.rabtaGetCountFromServer(postsCountQuery),
+      window.rabtaGetCountFromServer(reelsCountQuery)
+    ]);
+
+    totalContentCount =
+      countResults[0].data().count +
+      countResults[1].data().count;
+
+  } catch(error) {
+
+    console.error("Rabta Combined Count Error:", error);
+
+  }
+
+  // ❤️ Public / Unlocked Profile Content Load
+  if(!isPrivateProfile){
+
+    allPosts =
+      await window.rabtaLoadProfilePosts(p.uid, "post");
+
+    allReels =
+      await window.rabtaLoadProfilePosts(p.uid, "reel");
+
+    profileHighlights =
+      await window.rabtaLoadProfileHighlights(p.uid);
+
+    // ❤️ Count query fail ho toh loaded content se count
+    if(totalContentCount === 0){
+      totalContentCount =
+        allPosts.length + allReels.length;
+    }
+
+  }
   window.rabtaCurrentViewedProfile = {
     uid: p.uid,
     name: p.name,
@@ -25767,8 +25880,8 @@ if(
 
 <!-- Added You Count -->
 <div
-  onclick="${isPrivateProfile ? "" : "rabtaShowConnectionList('addedYou')"}"
-  style="min-width:0;cursor:${isPrivateProfile ? "default" : "pointer"};"
+  onclick="${(isPrivateProfile && myConnectionStatus !== "confirmed") ? "" : "rabtaShowConnectionList('addedYou')"}"
+  style="min-width:0;cursor:${(isPrivateProfile && myConnectionStatus !== "confirmed") ? "default" : "pointer"};"
 >
   <div style="font-size:16px;font-weight:bold;">
     ${connectionLists.addedYou.length}
@@ -25778,8 +25891,8 @@ if(
 
 <!-- Added Count -->
 <div
-  onclick="${isPrivateProfile ? "" : "rabtaShowConnectionList('added')"}"
-  style="min-width:0;cursor:${isPrivateProfile ? "default" : "pointer"};"
+  onclick="${(isPrivateProfile && myConnectionStatus !== "confirmed") ? "" : "rabtaShowConnectionList('added')"}"
+  style="min-width:0;cursor:${(isPrivateProfile && myConnectionStatus !== "confirmed") ? "default" : "pointer"};"
 >
   <div style="font-size:16px;font-weight:bold;">
     ${connectionLists.added.length}
@@ -25965,134 +26078,138 @@ ${!isPrivateProfile && profileHighlights.length > 0 ? `
 
 ` : ""}
 
-  ${!isPrivateProfile ? `
+        ${
+        isPrivateProfile && !isOwnProfile
+        ? `
 
-      ${isPrivateProfile && !isOwnProfile ? `
-
-        <!-- 🔒 Instagram Style Locked Profile -->
-
-        <div style="
-          width:100%;
-          min-height:280px;
-          box-sizing:border-box;
-          display:flex;
-          flex-direction:column;
-          align-items:center;
-          justify-content:center;
-          text-align:center;
-          padding:35px 20px;
-          background:#fff;
-          border-top:1px solid #f3e5e9;
-        ">
+          <!-- 🔒 Instagram Style Private Profile -->
 
           <div style="
-            width:85px;
-            height:85px;
-            border:2px solid #ff4081;
-            border-radius:50%;
+            width:100%;
+            min-height:320px;
+            box-sizing:border-box;
             display:flex;
+            flex-direction:column;
             align-items:center;
             justify-content:center;
-            font-size:42px;
-            background:#fff5f8;
-          ">
-            🔒
-          </div>
-
-          <div style="
-            font-size:19px;
-            font-weight:bold;
-            color:#262626;
-            margin-top:18px;
-          ">
-            This Account is Private
-          </div>
-
-          <div style="
-            font-size:13px;
-            color:#888;
-            margin-top:8px;
-            line-height:1.6;
-          ">
-            Add this account to see their posts and reels.
-          </div>
-
-          <div style="
-            font-size:13px;
-            color:#ff1744;
-            font-weight:bold;
-            margin-top:12px;
-          ">
-            🔒 Locked Profile
-          </div>
-
-        </div>
-
-      ` : ""}
-
-      <!-- ❤️ POST / REEL Tabs -->
-      <div style="
-        display:flex;
-        margin-top:22px;
-        border-top:1px solid #eee;
-        border-bottom:1px solid #eee;
-      ">
-
-        <button
-          id="rabtaPostTab"
-          onclick="rabtaSwitchProfileTab('post')"
-          style="
-            flex:1;
-            padding:13px;
-            border:0;
+            text-align:center;
+            padding:35px 20px;
             background:white;
-            color:#ff1744;
-            font-weight:bold;
-            border-bottom:2px solid #ff1744;
-          "
-        >
-          ▦ POST
-        </button>
+            border-top:1px solid #eee;
+          ">
 
-        <button
-          id="rabtaReelTab"
-          onclick="rabtaSwitchProfileTab('reel')"
-          style="
-            flex:1;
-            padding:13px;
-            border:0;
-            background:white;
-            color:#888;
-            font-weight:bold;
-            border-bottom:2px solid transparent;
-          "
-        >
-          ▶ REEL
-        </button>
-
-      </div>
-
-      <!-- ❤️ Content Grid -->
-      <div
-        id="rabtaProfileContentGrid"
-        style="
-          display:grid;
-          grid-template-columns:repeat(3,minmax(0,1fr));
-          gap:2px;
-          margin-top:3px;
-        "
-      >
-        <p style="
-          grid-column:1/4;
-          text-align:center;
-          padding:25px;
-          color:#999;
-        ">
-          Loading Posts... ❤️
-        </p>
+            <div style="
+              width:90px;
+              height:90px;
+              border:2px solid #ff4081;
+              border-radius:50%;
+              display:flex;
+              align-items:center;
+              justify-content:center;
+              background:#fff5f8;
+              font-size:45px;
+            ">
+              🔒
             </div>
 
-      ` : ""}
+            <div style="
+              font-size:20px;
+              font-weight:bold;
+              color:#262626;
+              margin-top:18px;
+            ">
+              This Account is Private
+            </div>
+
+            <div style="
+              font-size:13px;
+              color:#888;
+              margin-top:9px;
+              line-height:1.6;
+            ">
+              Add this account to see their photos and videos.
+            </div>
+
+            <div style="
+              margin-top:15px;
+              color:#ff1744;
+              font-size:14px;
+              font-weight:bold;
+            ">
+              🔒 Locked Profile
+            </div>
+
+          </div>
+
+        `
+        : `
+
+          <!-- ❤️ POST / REEL Tabs -->
+
+          <div style="
+            display:flex;
+            margin-top:22px;
+            border-top:1px solid #eee;
+            border-bottom:1px solid #eee;
+          ">
+
+            <button
+              id="rabtaPostTab"
+              onclick="rabtaSwitchProfileTab('post')"
+              style="
+                flex:1;
+                padding:13px;
+                border:0;
+                background:white;
+                color:#ff1744;
+                font-weight:bold;
+                border-bottom:2px solid #ff1744;
+              "
+            >
+              ▦ POST
+            </button>
+
+            <button
+              id="rabtaReelTab"
+              onclick="rabtaSwitchProfileTab('reel')"
+              style="
+                flex:1;
+                padding:13px;
+                border:0;
+                background:white;
+                color:#888;
+                font-weight:bold;
+                border-bottom:2px solid transparent;
+              "
+            >
+              ▶ REEL
+            </button>
+
+          </div>
+
+          <!-- ❤️ Content Grid -->
+
+          <div
+            id="rabtaProfileContentGrid"
+            style="
+              display:grid;
+              grid-template-columns:repeat(3,minmax(0,1fr));
+              gap:2px;
+              margin-top:3px;
+            "
+          >
+            <p style="
+              grid-column:1/4;
+              text-align:center;
+              padding:25px;
+              color:#999;
+            ">
+              Loading Posts... ❤️
+            </p>
+          </div>
+
+        `
+      }
 
         </div>
   ` : ""}
@@ -32801,6 +32918,7 @@ import {
   deleteDoc,
   collection,
   getDocs,
+    getCountFromServer,
   query,
   where,
   limit,
@@ -40234,6 +40352,7 @@ window.rabtaDB = getFirestore(rabtaApp);
   // ❤️ Firebase functions ko global access do
 window.rabtaGetDoc = getDoc;
 window.rabtaDoc = doc;
+window.rabtaGetCountFromServer = getCountFromServer;
   
   // ❤️ RABTA ONLINE / OFFLINE PRESENCE
 
