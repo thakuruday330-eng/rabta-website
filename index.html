@@ -23593,15 +23593,15 @@ async function filterDiscoverProfiles(value){
 
     });
 
-    // ❤️ Rabta Smart Discover Sorting
-
-const myProfileSnapshot = await getDoc(
-  doc(
-    window.rabtaDB,
-    "publicProfiles",
-    currentUser.uid
-  )
+    // ❤️ Firebase se apni profile load karo
+const myProfileRef = window.rabtaFirebaseDoc(
+  window.rabtaDB,
+  "publicProfiles",
+  currentUser.uid
 );
+
+const myProfileSnapshot =
+  await window.rabtaFirebaseGetDoc(myProfileRef);
 
 let myProfile = {};
 
