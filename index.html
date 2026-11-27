@@ -25592,7 +25592,26 @@ const myConnectionStatus =
 const isOwnProfile =
   String(currentUid) === String(p.uid);
   
+// ❤️ Firebase se actual Public / Private status
+const visibilityRef = window.rabtaFirebaseDoc(
+  window.rabtaDB,
+  "publicProfiles",
+  p.uid
+);
 
+const visibilityDoc =
+  await window.rabtaFirebaseGetDoc(visibilityRef);
+
+const visibilityData = visibilityDoc.exists()
+  ? visibilityDoc.data()
+  : {};
+
+const isPrivateProfile =
+  !isOwnProfile &&
+  (
+    visibilityData.profileVisible === false ||
+    visibilityData.profileVisible === "off"
+  );
 
   window.rabtaCurrentViewedProfile = {
     uid: p.uid,
@@ -25733,10 +25752,12 @@ if(
           text-align:center;
         ">
 
-          <!-- ❤️ Posts Count -->
+          <!-- ❤️ Profile Counts — Public / Private -->
+
+<!-- Posts Count -->
 <div
-  onclick="rabtaShowConnectionList('posts')"
-  style="min-width:0;cursor:pointer;"
+  onclick="${isPrivateProfile ? "" : "rabtaShowConnectionList('posts')"}"
+  style="min-width:0;cursor:${isPrivateProfile ? "default" : "pointer"};"
 >
   <div style="font-size:16px;font-weight:bold;">
     ${allPosts.length}
@@ -25744,10 +25765,10 @@ if(
   <div style="font-size:10px;color:#777;">Posts</div>
 </div>
 
-<!-- ❤️ Added You Count -->
+<!-- Added You Count -->
 <div
-  onclick="rabtaShowConnectionList('addedYou')"
-  style="min-width:0;cursor:pointer;"
+  onclick="${isPrivateProfile ? "" : "rabtaShowConnectionList('addedYou')"}"
+  style="min-width:0;cursor:${isPrivateProfile ? "default" : "pointer"};"
 >
   <div style="font-size:16px;font-weight:bold;">
     ${connectionLists.addedYou.length}
@@ -25755,17 +25776,16 @@ if(
   <div style="font-size:10px;color:#777;">Added You</div>
 </div>
 
-<!-- ❤️ Added Count -->
+<!-- Added Count -->
 <div
-  onclick="rabtaShowConnectionList('added')"
-  style="min-width:0;cursor:pointer;"
+  onclick="${isPrivateProfile ? "" : "rabtaShowConnectionList('added')"}"
+  style="min-width:0;cursor:${isPrivateProfile ? "default" : "pointer"};"
 >
   <div style="font-size:16px;font-weight:bold;">
     ${connectionLists.added.length}
   </div>
   <div style="font-size:10px;color:#777;">Added</div>
 </div>
-
         </div>
 
       </div>
@@ -25796,49 +25816,56 @@ if(
 
 <!-- ❤️ Rabta Connection Actions -->
 ${!isOwnProfile ? `
+
 <div style="
-display:flex;
-gap:10px;
-margin-top:14px;
-align-items:center;
+  display:flex;
+  gap:10px;
+  margin-top:14px;
+  align-items:center;
 ">
 
-<button onclick="
-window.rabtaProfileConnectionAction('${p.uid}', this)
-" style="
-flex:1;
-padding:11px 8px;
-border:none;
-border-radius:10px;
-background:#ff1744;
-color:white;
-font-weight:bold;
-font-size:13px;
-">
-${myConnectionStatus === "confirmed" ? "❤️ Added" :
-  myConnectionStatus === "addBack" ? "💞 Add Back" :
-  myConnectionStatus === "pending" ? "⏳ Requested" :
-  "❤️ Add"}
-</button>
+  <!-- ❤️ Add Button -->
+  <button onclick="
+    window.rabtaProfileConnectionAction('${p.uid}', this)
+  " style="
+    flex:1;
+    padding:11px 8px;
+    border:none;
+    border-radius:10px;
+    background:#ff1744;
+    color:white;
+    font-weight:bold;
+    font-size:13px;
+  ">
+    ${myConnectionStatus === "confirmed" ? "❤️ Added" :
+      myConnectionStatus === "addBack" ? "💞 Add Back" :
+      myConnectionStatus === "pending" ? "⏳ Requested" :
+      "❤️ Add"}
+  </button>
 
-<button onclick="
-openMatchChat('${String(p.name).replace(/'/g, "\\'")}')
-" style="
-flex:1;
-padding:11px 8px;
-border:none;
-border-radius:10px;
-background:#fff0f4;
-color:#ff1744;
-font-weight:bold;
-font-size:13px;
-">
-💬 Message
-</button>
+  <!-- ❤️ Public Profile Only Message -->
+  ${!isPrivateProfile ? `
+
+    <button onclick="
+      openMatchChat('${String(p.name).replace(/'/g, "\\'")}')
+    " style="
+      flex:1;
+      padding:11px 8px;
+      border:none;
+      border-radius:10px;
+      background:#fff0f4;
+      color:#ff1744;
+      font-weight:bold;
+      font-size:13px;
+    ">
+      💬 Message
+    </button>
+
+  ` : ""}
 
 </div>
-` : ""}
 
+` : ""}
 ${(
   window.rabtaAuth &&
   window.rabtaAuth.currentUser &&
@@ -25846,8 +25873,8 @@ ${(
 ) ? `
 
 <!-- ❤️ Rabta Viewed Profile Highlights -->
-${profileHighlights.length > 0 ? `
-
+${!isPrivateProfile && profileHighlights.length > 0 ? `
+  
   <div style="
     margin-top:20px;
     margin-bottom:15px;
@@ -25938,6 +25965,71 @@ ${profileHighlights.length > 0 ? `
 
 ` : ""}
 
+  ${!isPrivateProfile ? `
+
+      ${isPrivateProfile && !isOwnProfile ? `
+
+        <!-- 🔒 Instagram Style Locked Profile -->
+
+        <div style="
+          width:100%;
+          min-height:280px;
+          box-sizing:border-box;
+          display:flex;
+          flex-direction:column;
+          align-items:center;
+          justify-content:center;
+          text-align:center;
+          padding:35px 20px;
+          background:#fff;
+          border-top:1px solid #f3e5e9;
+        ">
+
+          <div style="
+            width:85px;
+            height:85px;
+            border:2px solid #ff4081;
+            border-radius:50%;
+            display:flex;
+            align-items:center;
+            justify-content:center;
+            font-size:42px;
+            background:#fff5f8;
+          ">
+            🔒
+          </div>
+
+          <div style="
+            font-size:19px;
+            font-weight:bold;
+            color:#262626;
+            margin-top:18px;
+          ">
+            This Account is Private
+          </div>
+
+          <div style="
+            font-size:13px;
+            color:#888;
+            margin-top:8px;
+            line-height:1.6;
+          ">
+            Add this account to see their posts and reels.
+          </div>
+
+          <div style="
+            font-size:13px;
+            color:#ff1744;
+            font-weight:bold;
+            margin-top:12px;
+          ">
+            🔒 Locked Profile
+          </div>
+
+        </div>
+
+      ` : ""}
+
       <!-- ❤️ POST / REEL Tabs -->
       <div style="
         display:flex;
@@ -25998,17 +26090,19 @@ ${profileHighlights.length > 0 ? `
         ">
           Loading Posts... ❤️
         </p>
-      </div>
+            </div>
 
+      ` : ""}
 
         </div>
   ` : ""}
 
   `;
 
-  // Default tab: POST
-  window.rabtaSwitchProfileTab("post");
-
+  // ❤️ Private profile mein POST tab open na karo
+  if(!isPrivateProfile){
+    window.rabtaSwitchProfileTab("post");
+  }
 }
   
 // ❤️ Rabta Profile Tab Switch
@@ -41846,12 +41940,16 @@ window.rabtaAddBackFirebaseConnection = async function(otherUid){
 
     });
 
-    // ❤️ Add Back Connection Notification
-await window.rabtaSaveConnectionNotification(
-  otherUid,
-  isPrivate ? "connection_request" : "connection_added",
-  requestId
-);
+    // ❤️ Sirf Private account ko notification
+if(isPrivate){
+
+  await window.rabtaSaveConnectionNotification(
+    otherUid,
+    "connection_request",
+    requestId
+  );
+
+}
   
     if(isPrivate){
       alert("❤️ Private account ko Add Back request bhej di!");
@@ -43590,135 +43688,57 @@ if(
     flex-shrink:0;
     align-items:center;
   `;
+// ❤️ Private Connection Request — Add Back Button
+if(item.action === "connection_request"){
 
-  // ❤️ Confirm Button
-  if(item.action === "connection_request"){
+  const addBackButton = document.createElement("button");
 
-    const confirmButton = document.createElement("button");
+  addBackButton.textContent = "Add Back";
 
-    confirmButton.textContent = "❤️ Confirm";
+  addBackButton.style.cssText = `
+    flex:none;
+    border:0;
+    border-radius:8px;
+    padding:7px 10px;
+    background:#ff1744;
+    color:white;
+    font-size:11px;
+    font-weight:bold;
+    white-space:nowrap;
+    min-width:65px;
+  `;
 
-    confirmButton.style.cssText = `
-      flex:1;
-      border:0;
-      border-radius:10px;
-      padding:10px;
-      background:#ff1744;
-      color:white;
-      font-weight:bold;
-    `;
+  addBackButton.onclick = async function(event){
 
-    confirmButton.onclick = async function(event){
+    event.stopPropagation();
 
-      event.stopPropagation();
+    addBackButton.disabled = true;
+    addBackButton.textContent = "Please wait...";
 
-      confirmButton.disabled = true;
-      confirmButton.textContent = "Please wait...";
-
-      await window.rabtaHandleFirebaseIncoming(
-        item.contentId,
-        "confirmed",
-        item.actorName
+    const success =
+      await window.rabtaAddBackFirebaseConnection(
+        item.actorUid
       );
+
+    if(success){
 
       screen.remove();
       await window.rabtaOpenNotifications();
 
-    };
+    }else{
 
-    buttonBox.appendChild(confirmButton);
+      addBackButton.disabled = false;
+      addBackButton.textContent = "Add Back";
 
-    // ❤️ Reject Button
-    const rejectButton = document.createElement("button");
+    }
 
-    rejectButton.textContent = "Reject";
+  };
 
-    rejectButton.style.cssText = `
-      flex:1;
-      border:1px solid #ff1744;
-      border-radius:10px;
-      padding:10px;
-      background:white;
-      color:#ff1744;
-      font-weight:bold;
-    `;
+  buttonBox.appendChild(addBackButton);
 
-    rejectButton.onclick = async function(event){
+}
 
-      event.stopPropagation();
-
-      if(!confirm("Request reject karni hai?")){
-        return;
-      }
-
-      rejectButton.disabled = true;
-
-      await window.rabtaHandleFirebaseIncoming(
-        item.contentId,
-        "rejected",
-        item.actorName
-      );
-
-      screen.remove();
-      await window.rabtaOpenNotifications();
-
-    };
-
-    buttonBox.appendChild(rejectButton);
-
-  }
-
-  // ❤️ Add Back Button
-  if(item.action === "connection_added"){
-
-    const addBackButton = document.createElement("button");
-
-    addBackButton.textContent = "💞 Add Back";
-
-    addBackButton.style.cssText = `
-      flex:none;
-      border:0;
-      border-radius:8px;
-      padding:7px 10px;
-      background:#ff1744;
-      color:white;
-      font-size:11px;
-      font-weight:bold;
-      white-space:nowrap;
-      min-width:65px;
-    `;
-
-    addBackButton.onclick = async function(event){
-
-      event.stopPropagation();
-
-      addBackButton.disabled = true;
-      addBackButton.textContent = "Please wait...";
-
-      const success =
-        await window.rabtaAddBackFirebaseConnection(
-          item.actorUid
-        );
-
-      if(success){
-
-        screen.remove();
-        await window.rabtaOpenNotifications();
-
-      }else{
-
-        addBackButton.disabled = false;
-        addBackButton.textContent = "💞 Add Back";
-
-      }
-
-    };
-
-    buttonBox.appendChild(addBackButton);
-
-  }
-
-  card.appendChild(buttonBox);
+card.appendChild(buttonBox);
 
 }
   
