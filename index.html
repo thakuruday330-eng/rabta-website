@@ -41306,9 +41306,13 @@ if(existingRequest.exists()){
     return false;
   }
 
-  // rejected request ko dobara Add karne denge
 }
+// ❤️ Rejected request ko dobara Add karne ke liye delete karo
+if(oldData.status === "rejected"){
 
+  await window.rabtaFirebaseDeleteDoc(requestRef);
+
+}
     await window.rabtaFirebaseSetDoc(requestRef, {
 
       senderUid: user.uid,
