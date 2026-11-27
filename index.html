@@ -40845,13 +40845,7 @@ if(profileDoc.id === user.uid && includeSelf !== true){
   return;
 }
 
-// ❤️ Hidden profiles ko Discover se hatao
-if(
-  data.profileVisible === false ||
-  data.profileVisible === "off"
-){
-  return;
-}
+
 
       // ❤️ Naam ke bina profile nahi dikhani
       if(!data.name || !data.name.trim()){
@@ -40944,13 +40938,13 @@ const mySnapshot = await getDoc(
         await window.rabtaLoadProfileConnections(user.uid);
     }
 
-    const hiddenUids = new Set([
-      ...(myConnections.added || []),
-      ...(myConnections.addedYou || [])
-    ].map(function(person){
-      return String(person.uid);
-    }));
-
+    // ❤️ Sirf jinhe maine Add kiya hai, unhe Discover se hide karo
+const hiddenUids = new Set(
+  (myConnections.added || []).map(function(person){
+    return String(person.uid);
+  })
+);
+  
     const eligible = profiles.filter(function(p){
 
       const uid = String(p.uid || "");
@@ -41159,7 +41153,87 @@ window.rabtaRefreshDiscoverProfiles = async function(){
 
 };
 
-  // ❤️ Rabta Firebase Connection Request — Firebase Only
+  // ❤️ Rabta: Firebase Connection Notification
+window.rabtaSaveConnectionNotification = async function(
+  recipientUid,
+  action,
+  requestId
+){
+
+  const user = window.rabtaAuth?.currentUser;
+
+  if(!user || !recipientUid || !requestId){
+    return false;
+  }
+
+  try{
+
+    // ❤️ Actor ki profile Firebase se load karo
+    const profileRef = window.rabtaFirebaseDoc(
+      window.rabtaDB,
+      "publicProfiles",
+      user.uid
+    );
+
+    const profileSnapshot =
+      await window.rabtaFirebaseGetDoc(profileRef);
+
+    const profileData = profileSnapshot.exists()
+      ? profileSnapshot.data()
+      : {};
+
+    // ❤️ Notification ID
+    const notificationId =
+      "connection_" + action + "_" + requestId;
+
+    const notificationRef = window.rabtaFirebaseDoc(
+      window.rabtaDB,
+      "notifications",
+      notificationId
+    );
+
+    // ❤️ Firebase notification save
+    await window.rabtaFirebaseSetDoc(
+      notificationRef,
+      {
+        recipientUid: recipientUid,
+        actorUid: user.uid,
+
+        actorName: profileData.name || "Rabta User",
+
+        actorPhoto:
+          profileData.photo ||
+          profileData.profilePhoto ||
+          profileData.photoURL ||
+          "",
+
+        action: action,
+        contentType: "connection",
+        contentId: requestId,
+        commentId: "",
+        createdAt: Date.now(),
+        read: false
+      }
+    );
+
+    console.log("Rabta Connection Notification Saved ❤️");
+
+    return true;
+
+  }catch(error){
+
+    console.error(
+      "Rabta Connection Notification Error:",
+      error
+    );
+
+    return false;
+
+  }
+
+};
+  
+  // ❤️ Rabta Add — Public / Private Account
 window.rabtaSendFirebaseConnectionRequest = async function(receiverUid){
 
   const user = window.rabtaAuth?.currentUser;
@@ -41176,44 +41250,86 @@ window.rabtaSendFirebaseConnectionRequest = async function(receiverUid){
 
   try{
 
+    // ❤️ Target ki Firebase profile load karo
+    const profileRef = window.rabtaFirebaseDoc(
+      window.rabtaDB,
+      "publicProfiles",
+      receiverUid
+    );
+
+    const profileSnapshot =
+      await window.rabtaFirebaseGetDoc(profileRef);
+
+    if(!profileSnapshot.exists()){
+      alert("Bhai, user ki profile nahi mili ❤️");
+      return false;
+    }
+
+    const profileData = profileSnapshot.data();
+
+    // ❤️ Profile visibility check
+    const visibility = profileData.profileVisible;
+
+    const isPrivate =
+      visibility === false ||
+      visibility === "off";
+
+    // ❤️ Public = Confirmed, Private = Pending
+    const requestStatus =
+      isPrivate ? "pending" : "confirmed";
+
     const requestId = user.uid + "_" + receiverUid;
 
-    // ❤️ Firebase request document
     const requestRef = window.rabtaFirebaseDoc(
       window.rabtaDB,
       "connectionRequests",
       requestId
     );
 
-    // ❤️ Pehle check karo request pehle se hai ya nahi
     const existingRequest =
       await window.rabtaFirebaseGetDoc(requestRef);
 
     if(existingRequest.exists()){
-      alert("❤️ Is user ko request pehle hi bheji ja chuki hai.");
+
+      alert("❤️ Is user ke saath request pehle se maujood hai.");
       return false;
+
     }
 
-    // ❤️ Firebase mein request save karo
     await window.rabtaFirebaseSetDoc(requestRef, {
 
       senderUid: user.uid,
       receiverUid: receiverUid,
-      status: "pending",
+      status: requestStatus,
       createdAt: new Date().toISOString()
 
     });
 
-    alert("❤️ Firebase connection request bhej di gayi!");
+    // ❤️ Connection Notification bhejo
+await window.rabtaSaveConnectionNotification(
+  receiverUid,
+  isPrivate ? "connection_request" : "connection_added",
+  requestId
+);
+  
+    if(isPrivate){
+
+      alert("❤️ Private account ko request bhej di gayi!");
+
+    }else{
+
+      alert("❤️ Public account se connection jud gaya!");
+
+    }
 
     return true;
 
   }catch(error){
 
-    console.error("Rabta Connection Request Error:", error);
+    console.error("Rabta Add Error:", error);
 
     alert(
-      "Firebase Error: " +
+      "Add nahi hua ❤️\n" +
       error.code +
       "\n" +
       error.message
@@ -41224,7 +41340,7 @@ window.rabtaSendFirebaseConnectionRequest = async function(receiverUid){
   }
 
 };
-
+  
 // ❤️ Rabta: Incoming Connection Requests — Firebase Only
 window.rabtaLoadIncomingConnectionRequests = async function(){
 
@@ -41594,35 +41710,31 @@ window.rabtaHandleFirebaseIncoming = async function(
       { merge: true }
     );
 
-    if(status === "confirmed"){
+// ❤️ Firebase Confirm / Reject
+if(status === "confirmed"){
 
-      let connections = JSON.parse(
-        localStorage.getItem("rabtaConnections") || "[]"
-      );
+  // ❤️ Connection Firebase mein confirmed ho chuka hai
 
-      const alreadyConnected = connections.some(
-        c => c.name === name
-      );
+  // ❤️ Request bhejne wale ko confirmation notification
+await window.rabtaSaveConnectionNotification(
+  requestData.senderUid,
+  "connection_confirmed",
+  requestId
+);
+  
+  window.rabtaConnectionStatuses =
+    await window.rabtaLoadMyConnectionStatuses();
 
-      if(!alreadyConnected){
-        connections.push({
-          name: name,
-          createdAt: Date.now()
-        });
-      }
+  // ❤️ Discover data refresh
+  window.rabtaCloudProfiles = null;
 
-      localStorage.setItem(
-        "rabtaConnections",
-        JSON.stringify(connections)
-      );
+  alert("❤️ Connection request confirm ho gayi!");
 
-      alert("❤️ Connection request confirm ho gayi!");
+}else{
 
-    }else{
+  alert("Request reject ho gayi ❤️");
 
-      alert("Request reject ho gayi ❤️");
-
-    }
+}
 
     await rabtaConnectionRequests();
 
@@ -41644,8 +41756,7 @@ window.rabtaHandleFirebaseIncoming = async function(
 
 };
 
-
- // ❤️ Rabta Firebase Add Back — Firebase Only
+// ❤️ Rabta Add Back — Public / Private Account
 window.rabtaAddBackFirebaseConnection = async function(otherUid){
 
   const user = window.rabtaAuth?.currentUser;
@@ -41661,9 +41772,35 @@ window.rabtaAddBackFirebaseConnection = async function(otherUid){
 
   try{
 
+    // ❤️ Jis user ko Add Back kar rahe hain uski profile
+    const profileRef = window.rabtaFirebaseDoc(
+      window.rabtaDB,
+      "publicProfiles",
+      otherUid
+    );
+
+    const profileSnapshot =
+      await window.rabtaFirebaseGetDoc(profileRef);
+
+    if(!profileSnapshot.exists()){
+      alert("User ki profile nahi mili ❤️");
+      return false;
+    }
+
+    const profileData = profileSnapshot.data();
+
+    // ❤️ Private / Public check
+    const visibility = profileData.profileVisible;
+
+    const isPrivate =
+      visibility === false ||
+      visibility === "off";
+
+    const requestStatus =
+      isPrivate ? "pending" : "confirmed";
+
     const requestId = user.uid + "_" + otherUid;
 
-    // ❤️ Firebase request document
     const requestRef = window.rabtaFirebaseDoc(
       window.rabtaDB,
       "connectionRequests",
@@ -41681,19 +41818,30 @@ window.rabtaAddBackFirebaseConnection = async function(otherUid){
         return true;
       }
 
-      alert("Connection request pehle se pending hai.");
+      alert("Connection request pehle se pending hai ❤️");
       return false;
     }
 
-    // ❤️ Firebase mein confirmed connection save
+    // ❤️ Firebase mein connection save
     await window.rabtaFirebaseSetDoc(requestRef, {
 
       senderUid: user.uid,
       receiverUid: otherUid,
-      status: "confirmed",
+      status: requestStatus,
       createdAt: new Date().toISOString()
 
     });
+
+    // ❤️ Add Back Connection Notification
+await window.rabtaSaveConnectionNotification(
+  otherUid,
+  isPrivate ? "connection_request" : "connection_added",
+  requestId
+);
+  
+    if(isPrivate){
+      alert("❤️ Private account ko Add Back request bhej di!");
+    }
 
     return true;
 
@@ -41707,10 +41855,9 @@ window.rabtaAddBackFirebaseConnection = async function(otherUid){
 
   }
 
-}; 
+};
   
-
-  // ❤️ Rabta Profile Add / Add Back Action
+   // ❤️ Rabta Profile Add / Add Back Action
 window.rabtaProfileConnectionAction = async function(otherUid, button){
 
   if(!otherUid || !button) return;
@@ -43341,10 +43488,32 @@ window.rabtaOpenNotifications = async function(){
 
     const action = document.createElement("span");
 
-    action.textContent =
-      item.action === "like"
-        ? " liked your " + item.contentType
-        : " commented on your " + item.contentType;
+if(item.action === "like"){
+
+  action.textContent =
+    " liked your " + item.contentType;
+
+}else if(item.action === "comment"){
+
+  action.textContent =
+    " commented on your " + item.contentType;
+
+}else if(item.action === "connection_request"){
+
+  action.textContent =
+    " sent you a connection request ❤️";
+
+}else if(item.action === "connection_added"){
+
+  action.textContent =
+    " added you as a connection ❤️";
+
+}else if(item.action === "connection_confirmed"){
+
+  action.textContent =
+    " accepted your connection request ❤️";
+
+}
 
     message.appendChild(actor);
     message.appendChild(action);
@@ -43366,15 +43535,171 @@ window.rabtaOpenNotifications = async function(){
 
     const icon = document.createElement("span");
 
-    icon.textContent =
-      item.action === "like" ? "❤️" : "💬";
+if(item.action === "like"){
+  icon.textContent = "❤️";
+}
+else if(item.action === "comment"){
+  icon.textContent = "💬";
+}
+else if(item.action === "connection_request"){
+  icon.textContent = "🔒";
+}
+else if(item.action === "connection_added"){
+  icon.textContent = "💞";
+}
+else if(item.action === "connection_confirmed"){
+  icon.textContent = "✅";
+}
 
-    icon.style.fontSize = "23px";
-
+icon.style.fontSize = "23px";
+    
     card.appendChild(photo);
     card.appendChild(details);
     card.appendChild(icon);
 
+    // ❤️ Connection Action Buttons
+if(
+  item.action === "connection_request" ||
+  item.action === "connection_added"
+){
+
+  const buttonBox = document.createElement("div");
+
+  buttonBox.style.cssText = `
+    width:100%;
+    display:flex;
+    gap:8px;
+    margin-top:8px;
+  `;
+
+  // ❤️ Confirm Button
+  if(item.action === "connection_request"){
+
+    const confirmButton = document.createElement("button");
+
+    confirmButton.textContent = "❤️ Confirm";
+
+    confirmButton.style.cssText = `
+      flex:1;
+      border:0;
+      border-radius:10px;
+      padding:10px;
+      background:#ff1744;
+      color:white;
+      font-weight:bold;
+    `;
+
+    confirmButton.onclick = async function(event){
+
+      event.stopPropagation();
+
+      confirmButton.disabled = true;
+      confirmButton.textContent = "Please wait...";
+
+      await window.rabtaHandleFirebaseIncoming(
+        item.contentId,
+        "confirmed",
+        item.actorName
+      );
+
+      screen.remove();
+      await window.rabtaOpenNotifications();
+
+    };
+
+    buttonBox.appendChild(confirmButton);
+
+    // ❤️ Reject Button
+    const rejectButton = document.createElement("button");
+
+    rejectButton.textContent = "Reject";
+
+    rejectButton.style.cssText = `
+      flex:1;
+      border:1px solid #ff1744;
+      border-radius:10px;
+      padding:10px;
+      background:white;
+      color:#ff1744;
+      font-weight:bold;
+    `;
+
+    rejectButton.onclick = async function(event){
+
+      event.stopPropagation();
+
+      if(!confirm("Request reject karni hai?")){
+        return;
+      }
+
+      rejectButton.disabled = true;
+
+      await window.rabtaHandleFirebaseIncoming(
+        item.contentId,
+        "rejected",
+        item.actorName
+      );
+
+      screen.remove();
+      await window.rabtaOpenNotifications();
+
+    };
+
+    buttonBox.appendChild(rejectButton);
+
+  }
+
+  // ❤️ Add Back Button
+  if(item.action === "connection_added"){
+
+    const addBackButton = document.createElement("button");
+
+    addBackButton.textContent = "💞 Add Back";
+
+    addBackButton.style.cssText = `
+      flex:1;
+      border:0;
+      border-radius:10px;
+      padding:10px;
+      background:#ff1744;
+      color:white;
+      font-weight:bold;
+    `;
+
+    addBackButton.onclick = async function(event){
+
+      event.stopPropagation();
+
+      addBackButton.disabled = true;
+      addBackButton.textContent = "Please wait...";
+
+      const success =
+        await window.rabtaAddBackFirebaseConnection(
+          item.actorUid
+        );
+
+      if(success){
+
+        screen.remove();
+        await window.rabtaOpenNotifications();
+
+      }else{
+
+        addBackButton.disabled = false;
+        addBackButton.textContent = "💞 Add Back";
+
+      }
+
+    };
+
+    buttonBox.appendChild(addBackButton);
+
+  }
+
+  card.appendChild(buttonBox);
+
+}
+  
     // ❤️ Long Press Delete Button
 card.style.flexWrap = "wrap";
 
@@ -43465,66 +43790,79 @@ deleteButton.onclick = async function(event){
 
 };
     
-    // ❤️ Notification Tap
-    card.onclick = async function(){
+   // ❤️ Notification Tap
+card.onclick = async function(){
 
-      try {
+  try {
 
-        const collectionName =
-          item.contentType === "reel"
-            ? "reels"
-            : "posts";
+    // ❤️ Connection notification par actor ki profile kholo
+    if(item.contentType === "connection"){
 
-        const contentRef = window.rabtaFirebaseDoc(
-          window.rabtaDB,
-          collectionName,
-          item.contentId
-        );
+      screen.remove();
 
-        const contentSnap =
-          await window.rabtaFirebaseGetDoc(contentRef);
+      if(typeof window.rabtaViewCloudProfile === "function"){
 
-        if(!contentSnap.exists()){
-          alert("Post/Reel ab available nahi hai.");
-          return;
-        }
+        window.rabtaViewCloudProfile(item.actorUid);
 
-        const contentItem = {
-          id: contentSnap.id,
-          ...contentSnap.data()
-        };
+      }else{
 
-        screen.remove();
-
-        if(item.contentType === "reel"){
-
-          if(window.rabtaOpenReelViewer){
-            window.rabtaOpenReelViewer(contentItem);
-          }
-
-        } else {
-
-          if(window.rabtaOpenPostViewer){
-            window.rabtaOpenPostViewer(contentItem);
-          }
-
-        }
-
-      } catch(error) {
-
-        console.error(
-          "Notification Open Error:",
-          error
-        );
-
-        alert(
-          "Post/Reel open nahi hui: " + error.message
-        );
+        alert("Profile open karne wala function nahi mila ❤️");
 
       }
 
+      return;
+    }
+
+    // ❤️ Purana Post / Reel notification behavior
+    const collectionName =
+      item.contentType === "reel"
+        ? "reels"
+        : "posts";
+
+    const contentRef = window.rabtaFirebaseDoc(
+      window.rabtaDB,
+      collectionName,
+      item.contentId
+    );
+
+    const contentSnap =
+      await window.rabtaFirebaseGetDoc(contentRef);
+
+    if(!contentSnap.exists()){
+      alert("Post/Reel ab available nahi hai.");
+      return;
+    }
+
+    const contentItem = {
+      id: contentSnap.id,
+      ...contentSnap.data()
     };
 
+    screen.remove();
+
+    if(item.contentType === "reel"){
+
+      if(window.rabtaOpenReelViewer){
+        window.rabtaOpenReelViewer(contentItem);
+      }
+
+    }else{
+
+      if(window.rabtaOpenPostViewer){
+        window.rabtaOpenPostViewer(contentItem);
+      }
+
+    }
+
+  }catch(error){
+
+    console.error("Notification Open Error:", error);
+
+    alert("Notification open nahi hui: " + error.message);
+
+  }
+
+};
     list.appendChild(card);
 
   });
