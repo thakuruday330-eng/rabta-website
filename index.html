@@ -41233,24 +41233,26 @@ window.rabtaSaveConnectionNotification = async function(
 
 };
   
-  // ❤️ Rabta Add — Public / Private Account
+// ❤️ Rabta Add — Public / Private
 window.rabtaSendFirebaseConnectionRequest = async function(receiverUid){
 
   const user = window.rabtaAuth?.currentUser;
 
   if(!user){
-    alert("Bhai, pehle Rabta mein login karo ❤️");
+    alert("Pehle Rabta mein login karo ❤️");
     return false;
   }
 
   if(!receiverUid || receiverUid === user.uid){
-    alert("Bhai, doosre registered user ki valid UID nahi mili ❤️");
+    alert("Valid user UID nahi mili ❤️");
     return false;
   }
 
+  let rabtaAddStage = "Profile load";
+
   try{
 
-    // ❤️ Target ki Firebase profile load karo
+    // Target profile
     const profileRef = window.rabtaFirebaseDoc(
       window.rabtaDB,
       "publicProfiles",
@@ -41261,22 +41263,17 @@ window.rabtaSendFirebaseConnectionRequest = async function(receiverUid){
       await window.rabtaFirebaseGetDoc(profileRef);
 
     if(!profileSnapshot.exists()){
-      alert("Bhai, user ki profile nahi mili ❤️");
+      alert("User ki profile nahi mili ❤️");
       return false;
     }
 
     const profileData = profileSnapshot.data();
 
-    // ❤️ Profile visibility check
     const visibility = profileData.profileVisible;
 
     const isPrivate =
       visibility === false ||
       visibility === "off";
-
-    // ❤️ Public = Confirmed, Private = Pending
-    const requestStatus =
-      isPrivate ? "pending" : "confirmed";
 
     const requestId = user.uid + "_" + receiverUid;
 
@@ -41286,52 +41283,52 @@ window.rabtaSendFirebaseConnectionRequest = async function(receiverUid){
       requestId
     );
 
-    const existingRequest =
+    rabtaAddStage = "Existing request check";
+
+    const existing =
       await window.rabtaFirebaseGetDoc(requestRef);
 
-    // ❤️ Existing Request Status Check
-if(existingRequest.exists()){
+    if(existing.exists()){
 
-  const oldData = existingRequest.data();
+      const oldData = existing.data();
 
-  if(
-    oldData.status === "pending" ||
-    oldData.status === "confirmed"
-  ){
+      if(
+        oldData.status === "pending" ||
+        oldData.status === "confirmed"
+      ){
+        alert("Ye connection pehle se maujood hai ❤️");
+        return false;
+      }
 
-    alert(
-      "❤️ Is user ke saath connection pehle se maujood hai."
-    );
+      if(oldData.status === "rejected"){
+        await window.rabtaFirebaseDeleteDoc(requestRef);
+      }
 
-    return false;
-  }
+    }
 
-}
-// ❤️ Rejected request ko dobara Add karne ke liye delete karo
-if(oldData.status === "rejected"){
+    rabtaAddStage = "Connection save";
 
-  await window.rabtaFirebaseDeleteDoc(requestRef);
-
-}
     await window.rabtaFirebaseSetDoc(requestRef, {
 
       senderUid: user.uid,
       receiverUid: receiverUid,
-      status: requestStatus,
+      status: isPrivate ? "pending" : "confirmed",
       createdAt: new Date().toISOString()
 
     });
 
-    // ❤️ Connection Notification bhejo
-await window.rabtaSaveConnectionNotification(
-  receiverUid,
-  isPrivate ? "connection_request" : "connection_added",
-  requestId
-);
-  
+    // ❤️ Sirf Private account ko notification
     if(isPrivate){
 
-      alert("❤️ Private account ko request bhej di gayi!");
+      rabtaAddStage = "Private notification";
+
+      await window.rabtaSaveConnectionNotification(
+        receiverUid,
+        "connection_request",
+        requestId
+      );
+
+      alert("❤️ Private account ko request bhej di!");
 
     }else{
 
@@ -41348,8 +41345,8 @@ await window.rabtaSaveConnectionNotification(
     alert(
       "Add nahi hua ❤️\n" +
       error.code +
-      "\n" +
-      error.message
+      "\nStep: " + rabtaAddStage +
+      "\n" + error.message
     );
 
     return false;
@@ -43462,30 +43459,30 @@ window.rabtaOpenNotifications = async function(){
 
     card.style.cssText = `
       background:white;
-      border-radius:15px;
-      padding:13px;
-      margin-bottom:12px;
+      border-radius:12px;
+      padding:${item.contentType === "connection" ? "9px" : "13px"};
+      margin-bottom:${item.contentType === "connection" ? "8px" : "12px"};
       display:flex;
       align-items:center;
-      gap:12px;
+      gap:${item.contentType === "connection" ? "8px" : "12px"};
       box-shadow:0 2px 9px #f3dce3;
       cursor:pointer;
     `;
-
+    
     const photo = document.createElement("img");
 
     photo.src = item.actorPhoto || "";
     photo.alt = "";
 
     photo.style.cssText = `
-      width:48px;
-      height:48px;
+      width:${item.contentType === "connection" ? "40px" : "48px"};
+      height:${item.contentType === "connection" ? "40px" : "48px"};
       border-radius:50%;
       object-fit:cover;
       background:#ffe0e8;
       flex-shrink:0;
     `;
-
+  
     const details = document.createElement("div");
 
     details.style.cssText = `
@@ -43570,7 +43567,9 @@ else if(item.action === "connection_confirmed"){
 }
 
 icon.style.fontSize = "23px";
-    
+    if(item.contentType === "connection"){
+  icon.style.display = "none";
+}
     card.appendChild(photo);
     card.appendChild(details);
     card.appendChild(icon);
@@ -43584,10 +43583,12 @@ if(
   const buttonBox = document.createElement("div");
 
   buttonBox.style.cssText = `
-    width:100%;
+    width:auto;
     display:flex;
-    gap:8px;
-    margin-top:8px;
+    gap:5px;
+    margin-top:0;
+    flex-shrink:0;
+    align-items:center;
   `;
 
   // ❤️ Confirm Button
@@ -43675,13 +43676,16 @@ if(
     addBackButton.textContent = "💞 Add Back";
 
     addBackButton.style.cssText = `
-      flex:1;
+      flex:none;
       border:0;
-      border-radius:10px;
-      padding:10px;
+      border-radius:8px;
+      padding:7px 10px;
       background:#ff1744;
       color:white;
+      font-size:11px;
       font-weight:bold;
+      white-space:nowrap;
+      min-width:65px;
     `;
 
     addBackButton.onclick = async function(event){
@@ -43719,7 +43723,6 @@ if(
 }
   
     // ❤️ Long Press Delete Button
-card.style.flexWrap = "wrap";
 
 let longPressTimer = null;
 let longPressTriggered = false;
