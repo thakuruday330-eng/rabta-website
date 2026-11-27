@@ -25598,53 +25598,7 @@ window.rabtaOpeningProfileUid = null;
     ? visibilityDoc.data()
     : {};
 
-    // ❤️ Connections Load
-  let connectionLists =
-    await window.rabtaLoadProfileConnections(p.uid);
-
-  let isVIP = p.name === "Priya";
-
-  // ❤️ Current User Connection Lists
-  const currentUid = window.rabtaAuth.currentUser.uid;
-
-  const myConnectionLists =
-    await window.rabtaLoadProfileConnections(currentUid);
-
-  const isInMyAdded = myConnectionLists.added.some(
-    function(person){
-      return String(person.uid) === String(p.uid);
-    }
-  );
-
-  const isInMyAddedYou = myConnectionLists.addedYou.some(
-    function(person){
-      return String(person.uid) === String(p.uid);
-    }
-  );
-
-  const myConnectionStatus =
-    isInMyAdded
-      ? "confirmed"
-      : isInMyAddedYou
-        ? "addBack"
-        : "";
-
-  const isOwnProfile =
-    String(currentUid) === String(p.uid);
-
-  // ❤️ Firebase Public / Private Status
-  const visibilityRef = window.rabtaFirebaseDoc(
-    window.rabtaDB,
-    "publicProfiles",
-    p.uid
-  );
-
-  const visibilityDoc =
-    await window.rabtaFirebaseGetDoc(visibilityRef);
-
-  const visibilityData = visibilityDoc.exists()
-    ? visibilityDoc.data()
-    : {};
+    
 
   // ❤️ Private Profile — Confirmed Friend Unlock
   const isPrivateProfile =
@@ -25873,7 +25827,7 @@ if(
   style="min-width:0;cursor:${isPrivateProfile ? "default" : "pointer"};"
 >
   <div style="font-size:16px;font-weight:bold;">
-    ${allPosts.length}
+    ${totalContentCount}
   </div>
   <div style="font-size:10px;color:#777;">Posts</div>
 </div>
